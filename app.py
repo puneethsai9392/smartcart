@@ -69,10 +69,52 @@ def send_mail_with_timeout(message, timeout=3.0):
         mail.send(message)
         return True, None
     except Exception as e:
-        print(f"Mail delivery failed: {e}")
         return False, str(e)
     finally:
         socket.setdefaulttimeout(orig_timeout)
+
+
+def send_email_robust(recipient, subject, text_body, html_body=None):
+    """
+    Sends email via Resend HTTP API (if RESEND_API_KEY is configured),
+    or falls back to Flask-Mail SMTP with a strict 3-second timeout.
+    """
+    resend_api_key = os.environ.get("RESEND_API_KEY")
+    if resend_api_key:
+        try:
+            import requests
+            sender = os.environ.get("RESEND_FROM", "SmartCart <onboarding@resend.dev>")
+            payload = {
+                "from": sender,
+                "to": [recipient],
+                "subject": subject,
+                "text": text_body
+            }
+            if html_body:
+                payload["html"] = html_body
+            resp = requests.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {resend_api_key}", "Content-Type": "application/json"},
+                json=payload,
+                timeout=5.0
+            )
+            if resp.status_code in (200, 201):
+                return True
+            print(f"[RESEND ERROR] Status {resp.status_code}: {resp.text}")
+        except Exception as e:
+            print(f"[RESEND EXCEPTION] {e}")
+
+    # Fallback to Flask-Mail SMTP
+    try:
+        msg = Message(subject=subject, sender=config.MAIL_USERNAME, recipients=[recipient])
+        msg.body = text_body
+        if html_body:
+            msg.html = html_body
+        sent, err = send_mail_with_timeout(msg, timeout=3.0)
+        return sent
+    except Exception as e:
+        print(f"[SMTP EXCEPTION] {e}")
+        return False
 
 
 def send_otp_email(recipient_email, otp, recipient_type="Customer"):
@@ -80,18 +122,13 @@ def send_otp_email(recipient_email, otp, recipient_type="Customer"):
     Sends a styled OTP email for password reset.
     """
     subject = f"SmartCart {recipient_type} - Password Reset OTP"
-    message = Message(
-        subject=subject,
-        sender=config.MAIL_USERNAME,
-        recipients=[recipient_email]
-    )
-    message.body = (
+    body = (
         f"Hello,\n\n"
         f"Your OTP for resetting your SmartCart {recipient_type.lower()} password is: {otp}\n\n"
         f"This OTP is valid for 10 minutes. If you did not request a password reset, please ignore this email.\n\n"
         f"Best regards,\nSmartCart Team"
     )
-    message.html = f"""
+    html = f"""
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 520px; margin: auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
         <div style="text-align: center; margin-bottom: 22px;">
             <h2 style="color: #1e293b; margin: 0; font-size: 24px; font-weight: 700;">Smart<span style="color: #2874f0;">Cart</span></h2>
@@ -107,8 +144,7 @@ def send_otp_email(recipient_email, otp, recipient_type="Customer"):
         <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">&copy; SmartCart. All rights reserved.</p>
     </div>
     """
-    sent, _ = send_mail_with_timeout(message, timeout=3.0)
-    return sent
+    return send_email_robust(recipient_email, subject, body, html)
 
 
 
@@ -286,24 +322,15 @@ def admin_signup():
     otp = random.randint(100000, 999999)
     session['otp'] = otp
 
-    message = Message(
-        subject="SmartCart Admin OTP",
-        sender=config.MAIL_USERNAME,
-        recipients=[email]
-    )
-
-    message.body = (
-        f"Your OTP for SmartCart Admin Registration is: {otp}"
-    )
-
-    sent, err = send_mail_with_timeout(message, timeout=3.0)
+    body = f"Your OTP for SmartCart Admin Registration is: {otp}"
+    print(f"[SECURE LOG] Admin registration OTP for {email}: {otp}")
+    sent = send_email_robust(email, "SmartCart Admin OTP", body)
     if sent:
         flash("OTP sent to your email!", "success")
+        return redirect('/verify-otp')
     else:
-        print(f"Error sending admin OTP: {err}")
-        flash(f"Notice: Email could not be sent (cloud host SMTP restriction). For testing, your OTP is: {otp}", "warning")
-
-    return redirect('/verify-otp')
+        flash("Unable to deliver verification email. Please check your email configuration or contact support.", "danger")
+        return redirect('/admin-signup')
 
 
 # =========================================================
@@ -460,12 +487,14 @@ def admin_forgot_password():
     session['admin_reset_otp'] = str(otp)
     session['admin_reset_email'] = email
 
+    print(f"[SECURE LOG] Admin password reset OTP for {email}: {otp}")
     email_sent = send_otp_email(email, otp, "Admin")
     if not email_sent:
-        flash(f"Notice: Email delivery blocked by host. Your reset OTP is: {otp}", "warning")
+        flash("Unable to send reset code. Please check email settings or contact support.", "danger")
+        return redirect('/admin/forgot-password')
     else:
         flash(f"A password reset OTP has been sent to {email}.", "success")
-    return redirect('/admin/reset-password')
+        return redirect('/admin/reset-password')
 
 
 # =================================================================
@@ -481,12 +510,14 @@ def admin_resend_otp():
     otp = random.randint(100000, 999999)
     session['admin_reset_otp'] = str(otp)
 
+    print(f"[SECURE LOG] Admin resend OTP for {email}: {otp}")
     email_sent = send_otp_email(email, otp, "Admin")
     if not email_sent:
-        flash(f"Notice: Email delivery blocked by host. Your new OTP is: {otp}", "warning")
+        flash("Unable to send reset code. Please check email settings or contact support.", "danger")
+        return redirect('/admin/forgot-password')
     else:
         flash(f"A new OTP code has been sent to {email}.", "success")
-    return redirect('/admin/reset-password')
+        return redirect('/admin/reset-password')
 
 
 # =================================================================
@@ -1267,12 +1298,14 @@ def user_forgot_password():
     session['user_reset_otp'] = str(otp)
     session['user_reset_email'] = email
 
+    print(f"[SECURE LOG] User password reset OTP for {email}: {otp}")
     email_sent = send_otp_email(email, otp, "Customer")
     if not email_sent:
-        flash(f"Notice: Email delivery blocked by host. Your reset OTP is: {otp}", "warning")
+        flash("Unable to send reset code. Please check email settings or contact support.", "danger")
+        return redirect('/user/forgot-password')
     else:
         flash(f"A password reset OTP has been sent to {email}.", "success")
-    return redirect('/user/reset-password')
+        return redirect('/user/reset-password')
 
 
 # =========================================================
@@ -1288,12 +1321,14 @@ def user_resend_otp():
     otp = random.randint(100000, 999999)
     session['user_reset_otp'] = str(otp)
 
+    print(f"[SECURE LOG] User resend reset OTP for {email}: {otp}")
     email_sent = send_otp_email(email, otp, "Customer")
     if not email_sent:
-        flash(f"Notice: Email delivery blocked by host. Your new OTP is: {otp}", "warning")
+        flash("Unable to send reset code. Please check email settings or contact support.", "danger")
+        return redirect('/user/forgot-password')
     else:
         flash(f"A new OTP code has been sent to {email}.", "success")
-    return redirect('/user/reset-password')
+        return redirect('/user/reset-password')
 
 
 # =========================================================
