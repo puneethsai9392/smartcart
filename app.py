@@ -55,6 +55,26 @@ mail = Mail(app)
 app.config['ADMIN_UPLOAD_FOLDER'] = config.ADMIN_UPLOAD_FOLDER
 
 
+import socket
+
+def send_mail_with_timeout(message, timeout=3.0):
+    """
+    Sends an email with a strict socket timeout so that cloud firewalls
+    (like Render blocking outbound SMTP ports) fail fast without
+    hanging for 30s and causing Gunicorn worker timeout 500 crashes.
+    """
+    orig_timeout = socket.getdefaulttimeout()
+    try:
+        socket.setdefaulttimeout(timeout)
+        mail.send(message)
+        return True, None
+    except Exception as e:
+        print(f"Mail delivery failed: {e}")
+        return False, str(e)
+    finally:
+        socket.setdefaulttimeout(orig_timeout)
+
+
 def send_otp_email(recipient_email, otp, recipient_type="Customer"):
     """
     Sends a styled OTP email for password reset.
@@ -87,12 +107,8 @@ def send_otp_email(recipient_email, otp, recipient_type="Customer"):
         <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">&copy; SmartCart. All rights reserved.</p>
     </div>
     """
-    try:
-        mail.send(message)
-        return True
-    except Exception as e:
-        print(f"Mail delivery failed: {e}")
-        return False
+    sent, _ = send_mail_with_timeout(message, timeout=3.0)
+    return sent
 
 
 
@@ -200,6 +216,23 @@ def get_db_connection():
     return SQLiteConnectionWrapper(conn)
 
 
+def init_db():
+    """Ensure database tables exist on server startup."""
+    try:
+        db_path = getattr(config, 'DB_PATH', 'smartcart.db')
+        conn = sqlite3.connect(db_path, check_same_thread=False)
+        conn.execute("PRAGMA foreign_keys = ON;")
+        schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
+        if os.path.exists(schema_path):
+            with open(schema_path, 'r', encoding='utf-8') as f:
+                conn.executescript(f.read())
+        conn.close()
+    except Exception as e:
+        print(f"Database initialization warning: {e}")
+
+init_db()
+
+
 # =========================================================
 # ROOT ROUTE -> DEFAULT USER LOGIN
 # =========================================================
@@ -263,11 +296,11 @@ def admin_signup():
         f"Your OTP for SmartCart Admin Registration is: {otp}"
     )
 
-    try:
-        mail.send(message)
+    sent, err = send_mail_with_timeout(message, timeout=3.0)
+    if sent:
         flash("OTP sent to your email!", "success")
-    except Exception as e:
-        print(f"Error sending admin OTP: {e}")
+    else:
+        print(f"Error sending admin OTP: {err}")
         flash(f"Notice: Email could not be sent (cloud host SMTP restriction). For testing, your OTP is: {otp}", "warning")
 
     return redirect('/verify-otp')
@@ -1014,11 +1047,11 @@ def user_signup():
         f"Your OTP for SmartCart User Registration is: {otp}"
     )
 
-    try:
-        mail.send(message)
+    sent, err = send_mail_with_timeout(message, timeout=3.0)
+    if sent:
         flash("OTP sent to your email!", "success")
-    except Exception as e:
-        print(f"Error sending user OTP: {e}")
+    else:
+        print(f"Error sending user OTP: {err}")
         flash(f"Notice: Email could not be sent (cloud host SMTP restriction). For testing, your OTP is: {otp}", "warning")
 
     return redirect('/user-verify-otp')
