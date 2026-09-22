@@ -2,19 +2,29 @@
 # IMPORTS
 # =========================================================
 
-from flask import Flask, make_response, render_template, request, redirect, session, flash,jsonify
-from flask_mail import Mail, Message
+from flask import Flask, make_response, render_template, request, redirect, session, flash, jsonify
 from utlis.pdf_generator import generate_pdf
 import sqlite3
 import bcrypt
 import random
+import secrets
+import time
+import socket
+import ssl
+import smtplib
+import json
+import urllib.request
+import urllib.error
+import os
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import config
 
 import traceback
 import razorpay
 
 razorpay_client = razorpay.Client(
-    auth=(config.RAZORPAY_KEY_ID, config.RAZORPAY_KEY_SECRET)
+    auth=(config.RAZORPAY_KEY_ID or "", config.RAZORPAY_KEY_SECRET or "")
 )
 
 
@@ -27,7 +37,11 @@ razorpay_client = razorpay.Client(
 app = Flask(__name__)
 
 # Secret key is used for Flask sessions
-app.secret_key = config.SECRET_KEY
+app.secret_key = config.SECRET_KEY or os.environ.get("SECRET_KEY", "smartcart_dev_fallback_secret_key_2026")
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+if os.environ.get("RENDER") or os.environ.get("FLASK_ENV") == "production":
+    app.config['SESSION_COOKIE_SECURE'] = True
 
 @app.template_filter('format_count')
 def format_count(value):
@@ -41,80 +55,175 @@ def format_count(value):
 
 
 # =========================================================
-# EMAIL CONFIGURATION
+# EMAIL CONFIGURATION & DISPATCH
 # =========================================================
 
-app.config['MAIL_SERVER'] = config.MAIL_SERVER
-app.config['MAIL_PORT'] = config.MAIL_PORT
-app.config['MAIL_USE_TLS'] = config.MAIL_USE_TLS
-app.config['MAIL_USERNAME'] = config.MAIL_USERNAME
-app.config['MAIL_PASSWORD'] = config.MAIL_PASSWORD
-
-# Initialize Flask-Mail
-mail = Mail(app)
 app.config['ADMIN_UPLOAD_FOLDER'] = config.ADMIN_UPLOAD_FOLDER
 
 
-import socket
+def send_email_via_smtp(recipient, subject, text_body, html_body=None, timeout=8.0):
+    """
+    Sends an email using standard Python smtplib with STARTTLS on port 587.
+    Logs diagnostics safely without exposing passwords, OTPs, or API secrets.
+    Distinguishes connection timeout, DNS failure, auth failure, TLS error, etc.
+    """
+    server = config.MAIL_SERVER or "smtp.gmail.com"
+    port = int(config.MAIL_PORT or 587)
+    username = config.MAIL_USERNAME
+    password = config.MAIL_PASSWORD
+    use_tls = config.MAIL_USE_TLS
 
-def send_mail_with_timeout(message, timeout=3.0):
-    """
-    Sends an email with a strict socket timeout so that cloud firewalls
-    (like Render blocking outbound SMTP ports) fail fast without
-    hanging for 30s and causing Gunicorn worker timeout 500 crashes.
-    """
-    orig_timeout = socket.getdefaulttimeout()
+    # Safe diagnostic logs (NO credentials printed!)
+    print(f"[SMTP CONFIG] SMTP server: {server}:{port}")
+    print(f"[SMTP CONFIG] SMTP username configured: {bool(username)}")
+    print(f"[SMTP CONFIG] SMTP password configured: {bool(password)}")
+    print(f"[SMTP CONFIG] SMTP use_tls: {use_tls}")
+
+    if not username or not password:
+        print("[SMTP ERROR] Missing MAIL_USERNAME or MAIL_PASSWORD in environment.")
+        return False, "missing_credentials"
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = f"SmartCart <{username}>"
+    msg['To'] = recipient
+
+    part1 = MIMEText(text_body, 'plain', 'utf-8')
+    msg.attach(part1)
+    if html_body:
+        part2 = MIMEText(html_body, 'html', 'utf-8')
+        msg.attach(part2)
+
+    smtp_conn = None
     try:
-        socket.setdefaulttimeout(timeout)
-        mail.send(message)
+        print(f"[SMTP ATTEMPT] Connecting to {server}:{port} (timeout={timeout}s)...")
+        smtp_conn = smtplib.SMTP(server, port, timeout=timeout)
+        smtp_conn.ehlo()
+
+        if use_tls:
+            context = ssl.create_default_context()
+            smtp_conn.starttls(context=context)
+            smtp_conn.ehlo()
+
+        print("[SMTP ATTEMPT] Authenticating with SMTP server...")
+        smtp_conn.login(username, password)
+
+        print("[SMTP ATTEMPT] Sending message to recipient...")
+        smtp_conn.sendmail(username, [recipient], msg.as_string())
+        print("[SMTP SUCCESS] Email delivered successfully via Gmail SMTP.")
         return True, None
+
+    except smtplib.SMTPAuthenticationError as e:
+        print("[SMTP ERROR - AUTHENTICATION FAILURE] SMTP authentication failed:", repr(e))
+        print("  -> Hint: Verify MAIL_USERNAME is correct and MAIL_PASSWORD is a valid 16-character Google App Password (not your personal Google account password).")
+        print("OTP email failed:", repr(e))
+        return False, "authentication_failure"
+
+    except (socket.timeout, TimeoutError) as e:
+        print(f"[SMTP ERROR - CONNECTION TIMEOUT] SMTP connection timed out connecting to {server}:{port}:", repr(e))
+        print("  -> Hint: Outbound SMTP port 587 is likely blocked by cloud host.")
+        print("OTP email failed:", repr(e))
+        return False, "connection_timeout"
+
+    except socket.gaierror as e:
+        print(f"[SMTP ERROR - DNS FAILURE] Could not resolve SMTP server '{server}':", repr(e))
+        print("OTP email failed:", repr(e))
+        return False, "dns_failure"
+
+    except (ssl.SSLError, ssl.CertificateError) as e:
+        print("[SMTP ERROR - TLS FAILURE] SSL/TLS handshake failed:", repr(e))
+        print("OTP email failed:", repr(e))
+        return False, "tls_failure"
+
+    except smtplib.SMTPRecipientsRefused as e:
+        print("[SMTP ERROR - RECIPIENT REJECTED] SMTP recipient rejected:", repr(e))
+        print("OTP email failed:", repr(e))
+        return False, "recipient_rejected"
+
+    except smtplib.SMTPServerDisconnected as e:
+        print("[SMTP ERROR - SERVER DISCONNECTED] SMTP server disconnected unexpectedly:", repr(e))
+        print("OTP email failed:", repr(e))
+        return False, "server_disconnected"
+
     except Exception as e:
+        print("OTP email failed:", repr(e))
         return False, str(e)
+
     finally:
-        socket.setdefaulttimeout(orig_timeout)
+        if smtp_conn:
+            try:
+                smtp_conn.quit()
+            except Exception:
+                pass
+
+
+def send_email_via_resend(recipient, subject, text_body, html_body=None):
+    """
+    Sends email via Resend HTTPS REST API (port 443).
+    Preferred production fallback for cloud hosts that block outbound SMTP ports.
+    """
+    api_key = config.RESEND_API_KEY or os.environ.get("RESEND_API_KEY")
+    if not api_key:
+        return False
+
+    try:
+        sender = config.RESEND_FROM or os.environ.get("RESEND_FROM", "SmartCart <onboarding@resend.dev>")
+        payload = {
+            "from": sender,
+            "to": [recipient],
+            "subject": subject,
+            "text": text_body
+        }
+        if html_body:
+            payload["html"] = html_body
+
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=data,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "SmartCart/1.0"
+            },
+            method="POST"
+        )
+        print("[RESEND ATTEMPT] Sending email via Resend HTTPS API...")
+        with urllib.request.urlopen(req, timeout=8.0) as resp:
+            if resp.status in (200, 201):
+                print("[RESEND SUCCESS] Email delivered successfully via Resend HTTPS API.")
+                return True
+            print(f"[RESEND ERROR] HTTP status code: {resp.status}")
+            return False
+    except urllib.error.HTTPError as e:
+        err_msg = e.read().decode('utf-8', errors='ignore')
+        print(f"[RESEND HTTP ERROR] HTTP {e.code}: {err_msg}")
+        return False
+    except Exception as e:
+        print("Resend email failed:", repr(e))
+        return False
 
 
 def send_email_robust(recipient, subject, text_body, html_body=None):
     """
-    Sends email via Resend HTTP API (if RESEND_API_KEY is configured),
-    or falls back to Flask-Mail SMTP with a strict 3-second timeout.
+    Production-safe email dispatcher:
+    1. First attempts Gmail SMTP via standard smtplib with full diagnostics.
+    2. If SMTP fails (e.g. connection timeout on Render) and RESEND_API_KEY is configured,
+       falls back to Resend HTTPS REST API.
     """
-    resend_api_key = os.environ.get("RESEND_API_KEY")
-    if resend_api_key:
-        try:
-            import requests
-            sender = os.environ.get("RESEND_FROM", "SmartCart <onboarding@resend.dev>")
-            payload = {
-                "from": sender,
-                "to": [recipient],
-                "subject": subject,
-                "text": text_body
-            }
-            if html_body:
-                payload["html"] = html_body
-            resp = requests.post(
-                "https://api.resend.com/emails",
-                headers={"Authorization": f"Bearer {resend_api_key}", "Content-Type": "application/json"},
-                json=payload,
-                timeout=5.0
-            )
-            if resp.status_code in (200, 201):
-                return True
-            print(f"[RESEND ERROR] Status {resp.status_code}: {resp.text}")
-        except Exception as e:
-            print(f"[RESEND EXCEPTION] {e}")
+    # 1. Try Gmail SMTP if credentials configured
+    if config.MAIL_USERNAME and config.MAIL_PASSWORD:
+        sent, err = send_email_via_smtp(recipient, subject, text_body, html_body, timeout=8.0)
+        if sent:
+            return True
 
-    # Fallback to Flask-Mail SMTP
-    try:
-        msg = Message(subject=subject, sender=config.MAIL_USERNAME, recipients=[recipient])
-        msg.body = text_body
-        if html_body:
-            msg.html = html_body
-        sent, err = send_mail_with_timeout(msg, timeout=3.0)
-        return sent
-    except Exception as e:
-        print(f"[SMTP EXCEPTION] {e}")
-        return False
+    # 2. Fallback to Resend HTTPS API if configured
+    if config.RESEND_API_KEY or os.environ.get("RESEND_API_KEY"):
+        print("[EMAIL FALLBACK] Falling back to Resend HTTPS API...")
+        if send_email_via_resend(recipient, subject, text_body, html_body):
+            return True
+
+    return False
 
 
 def send_otp_email(recipient_email, otp, recipient_type="Customer"):
@@ -139,7 +248,7 @@ def send_otp_email(recipient_email, otp, recipient_type="Customer"):
         <div style="text-align: center; margin: 26px 0;">
             <span style="display: inline-block; font-size: 32px; font-weight: 700; letter-spacing: 6px; color: #2874f0; background: #eff6ff; padding: 12px 28px; border-radius: 8px; border: 1px dashed #93c5fd;">{otp}</span>
         </div>
-        <p style="color: #64748b; font-size: 13px; line-height: 1.5;">If you did not request this reset, you can safely ignore this email. Your password will remain unchanged.</p>
+        <p style="color: #64748b; font-size: 13px; line-height: 1.5;">This code is valid for 10 minutes. If you did not request this reset, you can safely ignore this email. Your password will remain unchanged.</p>
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 22px 0;" />
         <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">&copy; SmartCart. All rights reserved.</p>
     </div>
@@ -319,28 +428,18 @@ def admin_signup():
     session['signup_name'] = name
     session['signup_email'] = email
 
-    otp = random.randint(100000, 999999)
+    otp = str(secrets.randbelow(1000000)).zfill(6)
     session['otp'] = otp
+    session['otp_expiry'] = time.time() + 600
 
     body = f"Your OTP for SmartCart Admin Registration is: {otp}"
-    print(f"[SECURE LOG] Admin registration OTP for {email}: {otp}")
     sent = send_email_robust(email, "SmartCart Admin OTP", body)
     if sent:
-        flash("OTP sent to your email!", "success")
+        flash("OTP sent successfully. Please check your email or spam folder.", "success")
         return redirect('/verify-otp')
     else:
-        flash("Unable to deliver verification email. Please check your email configuration or contact support.", "danger")
+        flash("Unable to send OTP right now. Please try again later.", "danger")
         return redirect('/admin-signup')
-
-
-# =========================================================
-# OTP VERIFICATION PAGE
-# =========================================================
-
-@app.route('/verify-otp', methods=['GET'])
-def verify_otp_get():
-
-    return render_template('admin/verify_otp.html')
 
 
 # =========================================================
@@ -352,11 +451,20 @@ def verify_otp():
     if request.method == 'GET':
         return render_template('admin/verify_otp.html')
 
-    user_otp = request.form['otp']
-    password = request.form['password']
+    user_otp = request.form.get('otp', '').strip()
+    password = request.form.get('password', '')
 
-    if str(session.get('otp')) != str(user_otp):
-        flash("Invalid OTP. Try again!", "danger")
+    stored_otp = session.get('otp')
+    expiry = session.get('otp_expiry', 0)
+
+    if not stored_otp or time.time() > expiry:
+        session.pop('otp', None)
+        session.pop('otp_expiry', None)
+        flash("OTP code has expired. Please sign up again.", "danger")
+        return redirect('/admin-signup')
+
+    if str(stored_otp) != str(user_otp):
+        flash("Invalid OTP code. Please enter the correct code.", "danger")
         return redirect('/verify-otp')
 
     # continue creating admin...
@@ -402,6 +510,7 @@ def verify_otp():
     # -----------------------------------------------------
 
     session.pop('otp', None)
+    session.pop('otp_expiry', None)
     session.pop('signup_name', None)
     session.pop('signup_email', None)
 
@@ -483,17 +592,17 @@ def admin_forgot_password():
         flash("No admin account found with this email address.", "danger")
         return redirect('/admin/forgot-password')
 
-    otp = random.randint(100000, 999999)
-    session['admin_reset_otp'] = str(otp)
+    otp = str(secrets.randbelow(1000000)).zfill(6)
+    session['admin_reset_otp'] = otp
     session['admin_reset_email'] = email
+    session['admin_reset_otp_expiry'] = time.time() + 600
 
-    print(f"[SECURE LOG] Admin password reset OTP for {email}: {otp}")
     email_sent = send_otp_email(email, otp, "Admin")
     if not email_sent:
-        flash("Unable to send reset code. Please check email settings or contact support.", "danger")
+        flash("Unable to send OTP right now. Please try again later.", "danger")
         return redirect('/admin/forgot-password')
     else:
-        flash(f"A password reset OTP has been sent to {email}.", "success")
+        flash("OTP sent successfully. Please check your email or spam folder.", "success")
         return redirect('/admin/reset-password')
 
 
@@ -507,16 +616,16 @@ def admin_resend_otp():
         flash("Reset session expired. Please enter your email again.", "warning")
         return redirect('/admin/forgot-password')
 
-    otp = random.randint(100000, 999999)
-    session['admin_reset_otp'] = str(otp)
+    otp = str(secrets.randbelow(1000000)).zfill(6)
+    session['admin_reset_otp'] = otp
+    session['admin_reset_otp_expiry'] = time.time() + 600
 
-    print(f"[SECURE LOG] Admin resend OTP for {email}: {otp}")
     email_sent = send_otp_email(email, otp, "Admin")
     if not email_sent:
-        flash("Unable to send reset code. Please check email settings or contact support.", "danger")
-        return redirect('/admin/forgot-password')
+        flash("Unable to send OTP right now. Please try again later.", "danger")
+        return redirect('/admin/reset-password')
     else:
-        flash(f"A new OTP code has been sent to {email}.", "success")
+        flash("OTP sent successfully. Please check your email or spam folder.", "success")
         return redirect('/admin/reset-password')
 
 
@@ -538,9 +647,16 @@ def admin_reset_password():
     confirm_password = request.form.get('confirm_password', '')
 
     stored_otp = str(session.get('admin_reset_otp', ''))
+    expiry = session.get('admin_reset_otp_expiry', 0)
+
+    if not stored_otp or time.time() > expiry:
+        session.pop('admin_reset_otp', None)
+        session.pop('admin_reset_otp_expiry', None)
+        flash("OTP code has expired. Please request a new code.", "danger")
+        return redirect('/admin/forgot-password')
 
     if not otp or otp != stored_otp:
-        flash("Invalid or expired OTP code. Please enter the correct code.", "danger")
+        flash("Invalid OTP code. Please enter the correct code.", "danger")
         return redirect('/admin/reset-password')
 
     if len(new_password) < 6:
@@ -562,6 +678,7 @@ def admin_reset_password():
 
     session.pop('admin_reset_otp', None)
     session.pop('admin_reset_email', None)
+    session.pop('admin_reset_otp_expiry', None)
 
     flash("Admin password has been reset successfully! Please sign in with your new password.", "success")
     return redirect('/admin-login')
@@ -1294,17 +1411,17 @@ def user_forgot_password():
         flash("No account found with this email address.", "danger")
         return redirect('/user/forgot-password')
 
-    otp = random.randint(100000, 999999)
-    session['user_reset_otp'] = str(otp)
+    otp = str(secrets.randbelow(1000000)).zfill(6)
+    session['user_reset_otp'] = otp
     session['user_reset_email'] = email
+    session['user_reset_otp_expiry'] = time.time() + 600
 
-    print(f"[SECURE LOG] User password reset OTP for {email}: {otp}")
     email_sent = send_otp_email(email, otp, "Customer")
     if not email_sent:
-        flash("Unable to send reset code. Please check email settings or contact support.", "danger")
+        flash("Unable to send OTP right now. Please try again later.", "danger")
         return redirect('/user/forgot-password')
     else:
-        flash(f"A password reset OTP has been sent to {email}.", "success")
+        flash("OTP sent successfully. Please check your email or spam folder.", "success")
         return redirect('/user/reset-password')
 
 
@@ -1318,16 +1435,16 @@ def user_resend_otp():
         flash("Reset session expired. Please enter your email again.", "warning")
         return redirect('/user/forgot-password')
 
-    otp = random.randint(100000, 999999)
-    session['user_reset_otp'] = str(otp)
+    otp = str(secrets.randbelow(1000000)).zfill(6)
+    session['user_reset_otp'] = otp
+    session['user_reset_otp_expiry'] = time.time() + 600
 
-    print(f"[SECURE LOG] User resend reset OTP for {email}: {otp}")
     email_sent = send_otp_email(email, otp, "Customer")
     if not email_sent:
-        flash("Unable to send reset code. Please check email settings or contact support.", "danger")
-        return redirect('/user/forgot-password')
+        flash("Unable to send OTP right now. Please try again later.", "danger")
+        return redirect('/user/reset-password')
     else:
-        flash(f"A new OTP code has been sent to {email}.", "success")
+        flash("OTP sent successfully. Please check your email or spam folder.", "success")
         return redirect('/user/reset-password')
 
 
@@ -1349,9 +1466,16 @@ def user_reset_password():
     confirm_password = request.form.get('confirm_password', '')
 
     stored_otp = str(session.get('user_reset_otp', ''))
+    expiry = session.get('user_reset_otp_expiry', 0)
+
+    if not stored_otp or time.time() > expiry:
+        session.pop('user_reset_otp', None)
+        session.pop('user_reset_otp_expiry', None)
+        flash("OTP code has expired. Please request a new code.", "danger")
+        return redirect('/user/forgot-password')
 
     if not otp or otp != stored_otp:
-        flash("Invalid or expired OTP code. Please enter the correct code.", "danger")
+        flash("Invalid OTP code. Please enter the correct code.", "danger")
         return redirect('/user/reset-password')
 
     if len(new_password) < 6:
@@ -1373,6 +1497,7 @@ def user_reset_password():
 
     session.pop('user_reset_otp', None)
     session.pop('user_reset_email', None)
+    session.pop('user_reset_otp_expiry', None)
 
     flash("Password reset successfully! Please sign in with your new password.", "success")
     return redirect('/user/user-login')
