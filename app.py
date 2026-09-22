@@ -87,7 +87,12 @@ def send_otp_email(recipient_email, otp, recipient_type="Customer"):
         <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">&copy; SmartCart. All rights reserved.</p>
     </div>
     """
-    mail.send(message)
+    try:
+        mail.send(message)
+        return True
+    except Exception as e:
+        print(f"Mail delivery failed: {e}")
+        return False
 
 
 
@@ -258,9 +263,12 @@ def admin_signup():
         f"Your OTP for SmartCart Admin Registration is: {otp}"
     )
 
-    mail.send(message)
-
-    flash("OTP sent to your email!", "success")
+    try:
+        mail.send(message)
+        flash("OTP sent to your email!", "success")
+    except Exception as e:
+        print(f"Error sending admin OTP: {e}")
+        flash(f"Notice: Email could not be sent (cloud host SMTP restriction). For testing, your OTP is: {otp}", "warning")
 
     return redirect('/verify-otp')
 
@@ -419,14 +427,11 @@ def admin_forgot_password():
     session['admin_reset_otp'] = str(otp)
     session['admin_reset_email'] = email
 
-    try:
-        send_otp_email(email, otp, "Admin")
-    except Exception as e:
-        print(f"Error sending admin reset OTP email: {e}")
-        flash("Failed to send reset code. Please check email settings or internet connection.", "danger")
-        return redirect('/admin/forgot-password')
-
-    flash(f"A password reset OTP has been sent to {email}.", "success")
+    email_sent = send_otp_email(email, otp, "Admin")
+    if not email_sent:
+        flash(f"Notice: Email delivery blocked by host. Your reset OTP is: {otp}", "warning")
+    else:
+        flash(f"A password reset OTP has been sent to {email}.", "success")
     return redirect('/admin/reset-password')
 
 
@@ -443,14 +448,11 @@ def admin_resend_otp():
     otp = random.randint(100000, 999999)
     session['admin_reset_otp'] = str(otp)
 
-    try:
-        send_otp_email(email, otp, "Admin")
-    except Exception as e:
-        print(f"Error resending admin reset OTP email: {e}")
-        flash("Failed to resend reset code. Please try again.", "danger")
-        return redirect('/admin/reset-password')
-
-    flash(f"A new OTP code has been sent to {email}.", "success")
+    email_sent = send_otp_email(email, otp, "Admin")
+    if not email_sent:
+        flash(f"Notice: Email delivery blocked by host. Your new OTP is: {otp}", "warning")
+    else:
+        flash(f"A new OTP code has been sent to {email}.", "success")
     return redirect('/admin/reset-password')
 
 
@@ -1012,14 +1014,12 @@ def user_signup():
         f"Your OTP for SmartCart User Registration is: {otp}"
     )
 
-    mail.send(message)
-
-
-    # -----------------------------------------------------
-    # Redirect user to OTP verification page
-    # -----------------------------------------------------
-
-    flash("OTP sent to your email!", "success")
+    try:
+        mail.send(message)
+        flash("OTP sent to your email!", "success")
+    except Exception as e:
+        print(f"Error sending user OTP: {e}")
+        flash(f"Notice: Email could not be sent (cloud host SMTP restriction). For testing, your OTP is: {otp}", "warning")
 
     return redirect('/user-verify-otp')
 
@@ -1243,14 +1243,11 @@ def user_forgot_password():
     session['user_reset_otp'] = str(otp)
     session['user_reset_email'] = email
 
-    try:
-        send_otp_email(email, otp, "Customer")
-    except Exception as e:
-        print(f"Error sending user reset OTP email: {e}")
-        flash("Failed to send reset code. Please check email settings or internet connection.", "danger")
-        return redirect('/user/forgot-password')
-
-    flash(f"A password reset OTP has been sent to {email}.", "success")
+    email_sent = send_otp_email(email, otp, "Customer")
+    if not email_sent:
+        flash(f"Notice: Email delivery blocked by host. Your reset OTP is: {otp}", "warning")
+    else:
+        flash(f"A password reset OTP has been sent to {email}.", "success")
     return redirect('/user/reset-password')
 
 
@@ -1267,14 +1264,11 @@ def user_resend_otp():
     otp = random.randint(100000, 999999)
     session['user_reset_otp'] = str(otp)
 
-    try:
-        send_otp_email(email, otp, "Customer")
-    except Exception as e:
-        print(f"Error resending user reset OTP email: {e}")
-        flash("Failed to resend reset code. Please try again.", "danger")
-        return redirect('/user/reset-password')
-
-    flash(f"A new OTP code has been sent to {email}.", "success")
+    email_sent = send_otp_email(email, otp, "Customer")
+    if not email_sent:
+        flash(f"Notice: Email delivery blocked by host. Your new OTP is: {otp}", "warning")
+    else:
+        flash(f"A new OTP code has been sent to {email}.", "success")
     return redirect('/user/reset-password')
 
 

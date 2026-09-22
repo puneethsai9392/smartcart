@@ -19,7 +19,7 @@ MAIL_SERVER = os.environ.get("MAIL_SERVER", 'smtp.gmail.com')
 MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
 MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "True").lower() in ("true", "1", "yes")
 MAIL_USERNAME = os.environ.get("MAIL_USERNAME", 'puneethsai572@gmail.com')
-MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", 'wdpp oagu uluu gguq')
+MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", 'wdpp oagu uluu gguq').replace(" ", "").strip()
 
 ADMIN_UPLOAD_FOLDER = os.environ.get("ADMIN_UPLOAD_FOLDER", 'static/uploads/admin_profiles')
 
