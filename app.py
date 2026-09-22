@@ -962,7 +962,7 @@ def admin_profile_update():
 
 
 # =========================================================
-# USER SIGNUP
+# USER SIGNUP (Direct Registration)
 # =========================================================
 
 @app.route('/user-signup', methods=['GET', 'POST'])
@@ -974,6 +974,8 @@ def user_signup():
     # -----------------------------------------------------
 
     if request.method == 'GET':
+        if 'user_id' in session:
+            return redirect('/user/user-dashboard')
         return render_template('user/user_signup.html')
 
 
@@ -981,9 +983,22 @@ def user_signup():
     # Get signup details from form
     # -----------------------------------------------------
 
-    name = request.form['name']
-    email = request.form['email']
+    name = request.form.get('name', '').strip()
+    email = request.form.get('email', '').strip()
+    password = request.form.get('password', '')
+    confirm_password = request.form.get('confirm_password', '')
 
+    if not name or not email or not password or not confirm_password:
+        flash("All fields are required.", "danger")
+        return redirect('/user-signup')
+
+    if password != confirm_password:
+        flash("Passwords do not match! Please check and try again.", "danger")
+        return redirect('/user-signup')
+
+    if len(password) < 6:
+        flash("Password must be at least 6 characters long.", "danger")
+        return redirect('/user-signup')
 
     # -----------------------------------------------------
     # Check whether email already exists
@@ -999,62 +1014,38 @@ def user_signup():
 
     existing_user = cursor.fetchone()
 
-    cursor.close()
-    conn.close()
-
-
-    # -----------------------------------------------------
-    # Stop registration if email already exists
-    # -----------------------------------------------------
-
     if existing_user:
+        cursor.close()
+        conn.close()
         flash(
             "This email is already registered. Please login instead.",
             "danger"
         )
-
         return redirect('/user-signup')
 
-
     # -----------------------------------------------------
-    # Store signup details temporarily in session
-    # -----------------------------------------------------
-
-    session['user_signup_name'] = name
-    session['user_signup_email'] = email
-
-
-    # -----------------------------------------------------
-    # Generate and store OTP
+    # Hash password using bcrypt and create user
     # -----------------------------------------------------
 
-    otp = random.randint(100000, 999999)
-
-    session['user_otp'] = otp
-
-
-    # -----------------------------------------------------
-    # Send OTP to user's email
-    # -----------------------------------------------------
-
-    message = Message(
-        subject="SmartCart User OTP",
-        sender=config.MAIL_USERNAME,
-        recipients=[email]
+    hashed_password = bcrypt.hashpw(
+        password.encode('utf-8'),
+        bcrypt.gensalt()
     )
 
-    message.body = (
-        f"Your OTP for SmartCart User Registration is: {otp}"
+    cursor.execute(
+        """
+        INSERT INTO users (name, email, password)
+        VALUES (%s, %s, %s)
+        """,
+        (name, email, hashed_password)
     )
 
-    sent, err = send_mail_with_timeout(message, timeout=3.0)
-    if sent:
-        flash("OTP sent to your email!", "success")
-    else:
-        print(f"Error sending user OTP: {err}")
-        flash(f"Notice: Email could not be sent (cloud host SMTP restriction). For testing, your OTP is: {otp}", "warning")
+    conn.commit()
+    cursor.close()
+    conn.close()
 
-    return redirect('/user-verify-otp')
+    flash("Account created successfully! Please sign in with your credentials.", "success")
+    return redirect('/user-login')
 
 
 # =========================================================
