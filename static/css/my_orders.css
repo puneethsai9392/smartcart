@@ -1,0 +1,203 @@
+/* =========================================================
+   MY ORDERS PAGE CSS - Responsive Glassmorphic Theme
+   ========================================================= */
+
+:root {
+  --bg-page: #f8fafc;
+  --glass-bg: #ffffff;
+  --glass-border: #e2e8f0;
+  --text-main: #172337;
+  --text-muted: #64748b;
+  --primary: #2874F0;
+  --primary-hover: #185bcd;
+  --radius: 12px;
+  --shadow-glass: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Central container */
+.container {
+  max-width: 100%;
+  margin: 1.5rem 0 3rem;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+h2.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.8rem;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+/* Order card */
+.order-card {
+  background: var(--glass-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--glass-border);
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-glass);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.order-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.order-card h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.35rem;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.order-info p {
+  margin: 0.45rem 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.order-info strong {
+  color: var(--text-main);
+}
+
+/* Actions Button Group with Guaranteed Spacing */
+.order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--glass-border);
+}
+
+/* Action button */
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.65rem 1.3rem;
+  background: var(--primary);
+  color: #fff;
+  text-decoration: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.view-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 116, 240, 0.3);
+}
+
+/* Both action buttons share the same unified brand blue color */
+.view-btn.btn-invoice {
+  background: var(--primary);
+}
+
+.view-btn.btn-invoice:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 4px 12px rgba(40, 116, 240, 0.3);
+}
+
+/* Fallback spacing in case wrapper is not present */
+.order-card > .view-btn {
+  margin-top: 1rem;
+  margin-right: 12px;
+  margin-bottom: 10px;
+}
+
+/* Empty Orders State */
+.empty-orders-card {
+  background: #ffffff;
+  border-radius: var(--radius);
+  border: 1px solid #e2e8f0;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  box-shadow: var(--shadow-glass);
+  max-width: 520px;
+  margin: 2rem auto;
+}
+
+.empty-orders-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.empty-orders-card h3 {
+  font-size: 1.35rem;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.empty-orders-card p {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.empty-orders-card .btn-start-shopping {
+  display: inline-block;
+  padding: 0.75rem 1.6rem;
+  background: var(--primary);
+  color: #fff;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(40, 116, 240, 0.25);
+}
+
+.empty-orders-card .btn-start-shopping:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+/* Responsive Tweaks */
+@media (max-width: 640px) {
+  .container {
+    padding: 0 0.5rem;
+    margin: 1rem auto 2rem;
+  }
+  
+  .order-card {
+    padding: 1.25rem 1rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  h2.page-title {
+    font-size: 1.6rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .order-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 1rem;
+    width: 100%;
+  }
+
+  .order-actions .view-btn,
+  .order-card > .view-btn {
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
+    margin-bottom: 0;
+    padding: 0.75rem 1rem;
+  }
+}

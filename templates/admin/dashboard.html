@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}
+Admin Dashboard - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="dashboard-header-text">
+            <h1 class="dashboard-title">Welcome back, {{ admin_name }} 👋</h1>
+            <p class="dashboard-subtitle">Manage your catalog, add new products, and configure store settings.</p>
+        </div>
+        <div class="dashboard-header-actions">
+            <a href="/admin/add-item" class="dash-btn btn-primary-dash">
+                <span>➕</span>
+                <span>Add Product</span>
+            </a>
+            <a href="/admin/item-list" class="dash-btn btn-outline-dash">
+                <span>📦</span>
+                <span>View Inventory</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stat Cards -->
+    <div class="dashboard-grid">
+
+        <!-- Card 1: Inventory -->
+        <div class="dash-card">
+            <div class="dash-card-icon icon-blue">
+                <span>📦</span>
+            </div>
+            <div class="dash-card-body">
+                <h3 class="dash-card-title">Product Catalog</h3>
+                <p class="dash-card-desc">Inspect, edit, update, or remove existing products in store.</p>
+            </div>
+            <a href="/admin/item-list" class="dash-card-link">
+                <span>Manage Products</span>
+                <span>&rarr;</span>
+            </a>
+        </div>
+
+        <!-- Card 2: Add New Item -->
+        <div class="dash-card">
+            <div class="dash-card-icon icon-green">
+                <span>✨</span>
+            </div>
+            <div class="dash-card-body">
+                <h3 class="dash-card-title">Add New Product</h3>
+                <p class="dash-card-desc">Create listings with images, descriptions, pricing, and categories.</p>
+            </div>
+            <a href="/admin/add-item" class="dash-card-link">
+                <span>Add Listing</span>
+                <span>&rarr;</span>
+            </a>
+        </div>
+
+        <!-- Card 3: Profile Settings -->
+        <div class="dash-card">
+            <div class="dash-card-icon icon-purple">
+                <span>⚙️</span>
+            </div>
+            <div class="dash-card-body">
+                <h3 class="dash-card-title">Admin Profile</h3>
+                <p class="dash-card-desc">Update your display name, contact email, and security password.</p>
+            </div>
+            <a href="/admin/profile" class="dash-card-link">
+                <span>View Profile</span>
+                <span>&rarr;</span>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Quick Navigation Banner -->
+    <div class="dash-banner">
+        <div class="dash-banner-content">
+            <h3>Quick Admin Tip</h3>
+            <p>Keep your inventory photos clean with neutral backgrounds to improve customer conversion on the storefront.</p>
+        </div>
+        <div class="dash-banner-actions">
+            <a href="/user/products" class="dash-banner-link" target="_blank">Preview Storefront &rarr;</a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add New Product - SmartCart Admin
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/add_item.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="form-page-container">
+
+    <!-- Breadcrumb & Header -->
+    <div class="form-header">
+        <div class="breadcrumb">
+            <a href="/admin-dashboard">Dashboard</a>
+            <span>&rsaquo;</span>
+            <a href="/admin/item-list">Products</a>
+            <span>&rsaquo;</span>
+            <span>Add Product</span>
+        </div>
+        <h1 class="page-title">Add New Product</h1>
+        <p class="page-subtitle">Publish a new item to the customer catalog with pricing and media</p>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="form-card">
+        <form method="POST" action="/admin/add-item" enctype="multipart/form-data" class="product-form">
+
+            <div class="form-grid">
+
+                <!-- Col 1: Product Name -->
+                <div class="form-group span-2">
+                    <label for="name" class="form-label">Product Title / Name *</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="form-input"
+                        placeholder="e.g. Wireless Noise Cancelling Headphones"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <!-- Col 2: Category -->
+                <div class="form-group">
+                    <label for="category" class="form-label">Category *</label>
+                    <input
+                        type="text"
+                        id="category"
+                        name="category"
+                        class="form-input"
+                        placeholder="e.g. Electronics, Fashion, Home"
+                        required
+                    >
+                </div>
+
+                <!-- Col 3: Price -->
+                <div class="form-group">
+                    <label for="price" class="form-label">Selling Price (₹ INR) *</label>
+                    <div class="price-input-wrapper">
+                        <span class="currency-prefix">₹</span>
+                        <input
+                            type="number"
+                            step="0.01"
+                            id="price"
+                            name="price"
+                            class="form-input price-input"
+                            placeholder="0.00"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Col 4: Description -->
+                <div class="form-group span-2">
+    <label for="description" class="form-label">Product Description *</label>
+    <textarea
+        id="description"
+        name="description"
+        class="form-textarea"
+        rows="4"
+        placeholder="Detail the specifications, features, materials, and highlights of this item..."
+        required
+    ></textarea>
+</div>
+
+                <!-- Col 5: Image Upload -->
+                <div class="form-group span-2">
+                    <label for="image" class="form-label">Product Photo *</label>
+                    <div class="file-upload-box">
+                        <input
+                            type="file"
+                            id="image"
+                            name="image"
+                            accept="image/*"
+                            class="file-input"
+                            required
+                        >
+                        <p class="file-hint">Supported formats: JPG, PNG, WEBP. Use a clean, clear photo for best results.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    <span>Publish Product</span>
+                </button>
+                <a href="/admin/item-list" class="btn-cancel">
+                    <span>Cancel & Return</span>
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}
+Admin Registration - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_signup.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Card Header -->
+        <div class="auth-header">
+            <div class="auth-brand-badge">
+                <span>🛡️</span>
+            </div>
+            <h1 class="auth-title">Admin Registration</h1>
+            <p class="auth-subtitle">Create an authorized merchant/admin account for SmartCart</p>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="/admin-signup" class="auth-form">
+
+            <!-- Full Name -->
+            <div class="form-group">
+                <label for="name" class="form-label">Full Name</label>
+                <div class="input-container">
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="form-input"
+                        placeholder="e.g. Alexander Clark"
+                        required
+                        autofocus
+                    >
+                </div>
+            </div>
+
+            <!-- Email Address -->
+            <div class="form-group">
+                <label for="email" class="form-label">Work Email Address</label>
+                <div class="input-container">
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="admin@smartcart.com"
+                        required
+                    >
+                </div>
+                <span class="field-hint">A one-time verification OTP will be sent to this email.</span>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="auth-btn">
+                <span>Send Verification OTP</span>
+                <span class="btn-arrow">&rarr;</span>
+            </button>
+
+        </form>
+
+        <!-- Footer / Switch to Login -->
+        <div class="auth-footer">
+            <p>Already have an admin account? <a href="/admin-login" class="auth-link">Sign In</a></p>
+            <div class="auth-security-notice">
+                <span>🔒 256-bit Encrypted Admin Portal</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

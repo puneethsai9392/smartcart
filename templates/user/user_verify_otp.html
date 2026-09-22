@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}
+Verify Account OTP - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_verify_otp.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="user-auth-wrapper">
+    <div class="user-auth-card">
+
+        <!-- Header -->
+        <div class="user-auth-header">
+            <div class="auth-icon-badge">
+                <span>📱</span>
+            </div>
+            <h1 class="user-auth-title">Verify Your OTP</h1>
+            <p class="user-auth-subtitle">Enter the 6-digit code sent to your email to verify your identity and set your account password</p>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="/user-verify-otp" class="user-auth-form">
+
+            <!-- OTP -->
+            <div class="form-group">
+                <label for="otp" class="form-label">6-Digit Verification Code</label>
+                <div class="input-container">
+                    <input
+                        type="text"
+                        id="otp"
+                        name="otp"
+                        class="form-input user-otp-input"
+                        placeholder="••••••"
+                        maxlength="6"
+                        required
+                        autofocus
+                    >
+                </div>
+                <span class="field-hint">Please check your inbox or spam folder.</span>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password" class="form-label">Create Your Password</label>
+                <div class="input-container">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        placeholder="Choose a secure password"
+                        required
+                    >
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-user-submit">
+                <span>Verify OTP & Complete Signup</span>
+                <span class="btn-arrow">&rarr;</span>
+            </button>
+
+        </form>
+
+        <!-- Switch Link -->
+        <div class="user-auth-footer">
+            <p>Entered incorrect email? <a href="/user-signup" class="user-auth-link">Back to Signup</a></p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

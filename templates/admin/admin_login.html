@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}
+Admin Login - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_login.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Header -->
+        <div class="auth-header">
+            <div class="auth-brand-badge">
+                <span>🔑</span>
+            </div>
+            <h1 class="auth-title">Admin Login</h1>
+            <p class="auth-subtitle">Access your SmartCart administrative control center</p>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="/admin-login" class="auth-form">
+
+            <!-- Email -->
+            <div class="form-group">
+                <label for="email" class="form-label">Admin Email</label>
+                <div class="input-container">
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="admin@smartcart.com"
+                        required
+                        autofocus
+                    >
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <div class="form-label-row">
+                    <label for="password" class="form-label">Password</label>
+                    <a href="{{ url_for('admin_forgot_password') }}" class="forgot-link">Forgot Password?</a>
+                </div>
+                <div class="input-container">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        placeholder="••••••••"
+                        required
+                    >
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="auth-btn">
+                <span>Sign In to Dashboard</span>
+                <span class="btn-arrow">&rarr;</span>
+            </button>
+
+        </form>
+
+        <!-- Footer -->
+        <div class="auth-footer">
+            <p>Need a new admin account? <a href="/admin-signup" class="auth-link">Register Here</a></p>
+            <div class="auth-security-notice">
+                <span>🛡️ Authorized Personnel Only</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

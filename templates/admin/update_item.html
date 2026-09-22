@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}
+Update {{ product.name }} - SmartCart Admin
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/update_item.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="form-page-container">
+
+    <!-- Breadcrumb & Header -->
+    <div class="form-header">
+        <div class="breadcrumb">
+            <a href="/admin-dashboard">Dashboard</a>
+            <span>&rsaquo;</span>
+            <a href="/admin/item-list">Products</a>
+            <span>&rsaquo;</span>
+            <span>Update #{{ product.product_id }}</span>
+        </div>
+        <h1 class="page-title">Update Product Listing</h1>
+        <p class="page-subtitle">Modify details, pricing, description, or replacement photo for #{{ product.product_id }}</p>
+    </div>
+
+    <!-- Main Update Form Card -->
+    <div class="form-card">
+        <form method="POST" action="/admin/update-item/{{ product.product_id }}" enctype="multipart/form-data" class="product-form">
+
+            <div class="form-grid">
+
+                <!-- Product Name -->
+                <div class="form-group span-2">
+                    <label for="name" class="form-label">Product Name / Title *</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="form-input"
+                        value="{{ product.name }}"
+                        required
+                    >
+                </div>
+
+                <!-- Category -->
+                <div class="form-group">
+                    <label for="category" class="form-label">Category *</label>
+                    <input
+                        type="text"
+                        id="category"
+                        name="category"
+                        class="form-input"
+                        value="{{ product.category }}"
+                        required
+                    >
+                </div>
+
+                <!-- Price -->
+                <div class="form-group">
+                    <label for="price" class="form-label">Selling Price (₹ INR) *</label>
+                    <div class="price-input-wrapper">
+                        <span class="currency-prefix">₹</span>
+                        <input
+                            type="number"
+                            step="0.01"
+                            id="price"
+                            name="price"
+                            class="form-input price-input"
+                            value="{{ product.price }}"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group span-2">
+                    <label for="description" class="form-label">Description *</label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        class="form-textarea"
+                        rows="4"
+                        required
+                    >{{ product.description }}</textarea>
+                </div>
+
+                <!-- Image Preview & New File -->
+                <div class="form-group span-2">
+                    <label class="form-label">Current Product Image</label>
+                    <div class="current-image-wrapper">
+                        <div class="current-image-preview">
+                            <img
+                                src="/static/uploads/product_images/{{ product.image }}"
+                                alt="{{ product.name }}"
+                                class="thumb-img"
+                                onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23eee%22 width=%22100%22 height=%22100%22/><text fill=%22%23999%22 x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22>Current</text></svg>';"
+                            >
+                        </div>
+                        <div class="new-upload-section">
+                            <label for="image" class="form-label">Replace Image (Optional)</label>
+                            <input
+                                type="file"
+                                id="image"
+                                name="image"
+                                accept="image/*"
+                                class="file-input"
+                            >
+                            <p class="file-hint">Leave blank to keep current image. Supported formats: JPG, PNG, WEBP.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    <span>Update Product</span>
+                </button>
+                <a href="/admin/item-list" class="btn-cancel">
+                    <span>Back to Product List</span>
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}

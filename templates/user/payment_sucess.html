@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Successful - SmartCart{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payment_success.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="success-page">
+    <div class="success-card">
+        <div class="success-icon">✅</div>
+        <h2 class="success-title">Payment Successful!</h2>
+        <p class="success-subtitle">Your payment has been processed successfully.</p>
+
+        <div class="success-details">
+            <div class="detail-row">
+                <span class="detail-label">Payment ID</span>
+                <span class="detail-value">{{ payment_id }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Order ID</span>
+                <span class="detail-value">{{ order_id }}</span>
+            </div>
+        </div>
+
+        <div class="success-actions">
+            <a href="/user/products" class="btn-primary-action">Continue Shopping</a>
+            <a href="/user/my-orders" class="btn-secondary-action">View My Orders</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

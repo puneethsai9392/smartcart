@@ -1,0 +1,186 @@
+/* =========================================================
+   ORDER SUCCESS PAGE CSS - SmartCart
+========================================================= */
+
+.order-success-page {
+    padding: 0.5rem 0 2rem;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.order-success-container {
+    background: var(--white, #fff);
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: var(--radius-lg, 12px);
+    padding: 2.5rem 40px;
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.08));
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.success-header {
+    margin-bottom: 1.5rem;
+}
+
+.success-check {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    color: var(--success, #16A34A);
+}
+
+.success-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-main, #172337);
+    margin-bottom: 0.5rem;
+}
+
+.success-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted, #6B7280);
+    margin-bottom: 1.5rem;
+}
+
+.order-detail-card {
+    background: var(--bg-body, #F5F7FA);
+    border-radius: var(--radius-md, 8px);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.card-heading {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main, #172337);
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border, #E5E7EB);
+    padding-bottom: 0.5rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-muted, #6B7280);
+}
+
+.detail-item .detail-label {
+    font-weight: 500;
+    color: var(--text-main, #172337);
+}
+
+.detail-item .detail-value {
+    font-weight: 600;
+    color: var(--text-main, #172337);
+}
+
+.amount-paid {
+    font-size: 1.2rem;
+    color: var(--primary, #2874F0);
+    font-weight: 700;
+}
+
+.items-table-wrapper {
+    overflow-x: auto;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.items-table th,
+.items-table td {
+    border: 1px solid var(--border, #E5E7EB);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.items-table th {
+    background: var(--primary-light, #eff6ff);
+    color: var(--primary, #2874F0);
+    font-weight: 600;
+}
+
+.order-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.6rem;
+    background: var(--primary, #2874F0);
+    color: var(--white, #fff);
+    border: 1.5px solid var(--primary, #2874F0);
+    border-radius: var(--radius-md, 8px);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(40, 116, 240, 0.2);
+}
+
+.btn-primary-action:hover {
+    background: var(--primary-hover, #185bcd);
+    border-color: var(--primary-hover, #185bcd);
+    box-shadow: 0 4px 10px rgba(24, 91, 205, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.6rem;
+    background: var(--primary-light, #eff6ff);
+    color: var(--primary, #2874F0);
+    border: 1.5px solid var(--primary, #2874F0);
+    border-radius: var(--radius-md, 8px);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(40, 116, 240, 0.08);
+}
+
+.btn-secondary-action:hover {
+    background: var(--primary, #2874F0);
+    color: var(--white, #ffffff);
+    border-color: var(--primary, #2874F0);
+    box-shadow: 0 4px 10px rgba(40, 116, 240, 0.25);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+    .order-success-container {
+        padding: 1.5rem 1rem;
+    }
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    .order-actions {
+        width: 100%;
+    }
+    .btn-primary-action,
+    .btn-secondary-action {
+        width: 100%;
+        text-align: center;
+    }
+}

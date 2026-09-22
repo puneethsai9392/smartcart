@@ -1,0 +1,284 @@
+/* =========================================================
+   ADDRESS PAGE  (address.css)
+========================================================= */
+
+.address-page {
+    max-width: 1060px;
+    margin: 0 auto 48px;
+}
+
+/* Layout */
+.address-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 22px;
+    align-items: start;
+}
+
+/* --------- FORM CARD --------- */
+.address-form-card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    padding: 30px 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.addr-form-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.addr-form-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.addr-form-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #172337;
+    margin-bottom: 3px;
+    letter-spacing: -0.01em;
+}
+
+.addr-form-sub {
+    font-size: 0.85rem;
+    color: #6B7280;
+}
+
+.addr-form-divider {
+    height: 1px;
+    background: #F3F4F6;
+    margin-bottom: 24px;
+}
+
+/* --------- FORM FIELDS --------- */
+.addr-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.field-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    color: #172337;
+    background: #FAFAFA;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: #2874F0;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(40, 116, 240, 0.1);
+}
+
+.field-textarea {
+    height: 90px;
+    padding: 12px 14px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* --------- ACTIONS --------- */
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 6px;
+}
+
+.btn-save-address {
+    padding: 13px 30px;
+    background: linear-gradient(135deg, #2874F0 0%, #185bcd 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(40,116,240,0.3);
+    font-family: inherit;
+}
+
+.btn-save-address:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(40,116,240,0.4);
+    opacity: 0.92;
+}
+
+.btn-back-link {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #6B7280;
+    transition: color 0.15s ease;
+}
+
+.btn-back-link:hover {
+    color: #172337;
+}
+
+/* --------- RIGHT COLUMN --------- */
+.address-info-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Order context card */
+.addr-context-card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.ctx-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+}
+
+.ctx-product-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #172337;
+    line-height: 1.4;
+    margin-bottom: 12px;
+}
+
+.ctx-divider {
+    height: 1px;
+    background: #F3F4F6;
+    margin-bottom: 12px;
+}
+
+.ctx-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.ctx-price {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #172337;
+}
+
+/* Info card */
+.addr-info-card {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.addr-info-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e40af;
+    margin-bottom: 12px;
+}
+
+.addr-info-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    font-size: 0.85rem;
+    color: #1d4ed8;
+    font-weight: 500;
+}
+
+/* Secure note */
+.addr-secure-note {
+    font-size: 0.78rem;
+    color: #9CA3AF;
+    text-align: center;
+    padding: 12px 16px;
+    background: #F9FAFB;
+    border-radius: 8px;
+    border: 1px solid #F3F4F6;
+    line-height: 1.5;
+}
+
+/* --------- RESPONSIVE --------- */
+@media (max-width: 820px) {
+    .address-wrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .address-info-col {
+        order: -1;
+    }
+}
+
+@media (max-width: 600px) {
+    .address-form-card {
+        padding: 22px 18px;
+    }
+
+    .form-row-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row-3 {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-back-link {
+        text-align: center;
+    }
+}
+
+@media (max-width: 400px) {
+    .form-row-3 {
+        grid-template-columns: 1fr;
+    }
+}

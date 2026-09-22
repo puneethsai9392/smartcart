@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout & Payment - SmartCart{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payment.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="payment-page">
+    <h2 class="payment-page-title">💳 Checkout & Payment</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% set alert_class = 'success' if category == 'success' else ('error' if category in ['danger', 'error'] else ('warning' if category == 'warning' else 'info')) %}
+                <div class="alert-message {{ alert_class }}">
+                    <span class="alert-text">{{ message }}</span>
+                    <button type="button" class="alert-dismiss" onclick="this.parentElement.remove();">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="payment-container">
+
+        <!-- Left Column: Order + Address -->
+        <div class="payment-left">
+
+            <!-- Order Summary -->
+            <div class="payment-card">
+                <h3 class="card-heading">Order Summary</h3>
+                <div class="summary-row summary-total-row">
+                    <span>Total Amount</span>
+                    <span class="total-amount">₹{{ amount }}</span>
+                </div>
+            </div>
+
+            <!-- Delivery Address -->
+            <div class="payment-card">
+                <h3 class="card-heading">Delivery Address</h3>
+                {% if address %}
+                    <div class="address-block">
+                        <p class="addr-name"><strong>{{ address.name }}</strong></p>
+                        <p class="addr-phone">📞 {{ address.phone }}</p>
+                        <p class="addr-line">{{ address.address }}</p>
+                        <p class="addr-city">{{ address.city }}, {{ address.state }} - {{ address.pincode }}</p>
+                    </div>
+                    <a href="/user/update-address?source={{ session.get('checkout_type', 'cart') }}" class="change-addr-link">✏️ Change / Update Address</a>
+                {% else %}
+                    <p class="no-address">No delivery address found.</p>
+                    <a href="/user/address" class="add-addr-link">+ Add Address</a>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Right Column: Payment Action -->
+        <div class="payment-right">
+            <div class="payment-card payment-action-card">
+                <h3 class="card-heading">Payment</h3>
+                <p class="pay-amount-label">Amount to Pay</p>
+                <p class="pay-amount-value">₹{{ amount }}</p>
+
+                <button id="payButton" type="button" class="btn-pay">
+                    💳 Pay ₹{{ amount }}
+                </button>
+
+                <div class="secure-badge">
+                    <span>🔒</span> Secured by Razorpay
+                </div>
+
+                <a href="/user/products" class="btn-continue-shopping">← Continue Shopping</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById("payButton").onclick = function () {
+    var options = {
+        "key": "{{ key_id }}",
+        "amount": "{{ amount * 100 }}",
+        "currency": "INR",
+        "name": "SmartCart",
+        "description": "SmartCart Order",
+        "order_id": "{{ order_id }}",
+        "handler": function (response) {
+            var form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/verify-payment";
+
+            var paymentId = document.createElement("input");
+            paymentId.type = "hidden";
+            paymentId.name = "razorpay_payment_id";
+            paymentId.value = response.razorpay_payment_id;
+            form.appendChild(paymentId);
+
+            var orderId = document.createElement("input");
+            orderId.type = "hidden";
+            orderId.name = "razorpay_order_id";
+            orderId.value = response.razorpay_order_id;
+            form.appendChild(orderId);
+
+            var signature = document.createElement("input");
+            signature.type = "hidden";
+            signature.name = "razorpay_signature";
+            signature.value = response.razorpay_signature;
+            form.appendChild(signature);
+
+            document.body.appendChild(form);
+            form.submit();
+        },
+        "prefill": {
+            "name": "{{ address.name }}",
+            "contact": "{{ address.phone }}"
+        },
+        "theme": {
+            "color": "#2874F0"
+        }
+    };
+    var razorpay = new Razorpay(options);
+    razorpay.open();
+};
+</script>
+{% endblock %}

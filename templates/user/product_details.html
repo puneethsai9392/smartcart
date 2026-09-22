@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ product.name }} - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/product_details.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="product-view-container">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="/user/products">Home</a>
+        <span>&rsaquo;</span>
+        <a href="/user/products?category={{ product.category }}">{{ product.category }}</a>
+        <span>&rsaquo;</span>
+        <span>{{ product.name }}</span>
+    </div>
+
+    <!-- Main Detail Card -->
+    <div class="product-detail-card">
+        <div class="product-detail-grid">
+
+            <!-- Left: Large Image Container -->
+            <div class="product-image-pane">
+                <div class="image-stage">
+                    <img
+                        src="/static/uploads/product_images/{{ product.image }}"
+                        alt="{{ product.name }}"
+                        class="main-product-image"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22360%22 height=%22360%22><rect fill=%22%23f8fafc%22 width=%22360%22 height=%22360%22/><text fill=%22%2394a3b8%22 x=%2250%%22 y=%2250%%22 font-family=%22sans-serif%22 font-size=%2216%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22>SmartCart Product</text></svg>';"
+                    >
+                </div>
+            </div>
+
+            <!-- Right: Product Information & Purchase Strip -->
+            <div class="product-specs-pane">
+
+                <!-- Category Pill -->
+                <span class="category-badge">{{ product.category }}</span>
+
+                <!-- Title -->
+                <h1 class="product-title">{{ product.name }}</h1>
+
+                <!-- Ratings Strip -->
+                <div class="rating-strip">
+                    <span class="stars-badge">{{ product.rating or '4.5' }} ★</span>
+                    <span class="rating-text">{{ "{:,}".format(product.reviews_count|int) if product.reviews_count else '2,480' }} Ratings &amp; {{ "{:,}".format((product.reviews_count|int // 7) + 18) if product.reviews_count else '312' }} Reviews</span>
+                    <span class="verified-tag">✓ SmartCart Verified</span>
+                </div>
+
+                <hr class="divider">
+
+                <!-- Price Box -->
+                <div class="price-box">
+                    <div class="price-display">
+                        <span class="currency">₹</span>
+                        <span class="price-val">{{ product.price }}</span>
+                    </div>
+                    <span class="tax-info">Inclusive of all taxes</span>
+                    <div class="delivery-status">
+                        <span>⚡ In Stock &bull; Free Express Delivery</span>
+                    </div>
+                </div>
+
+                <!-- Description Block -->
+                <div class="description-section">
+                    <h3 class="section-heading">Product Overview</h3>
+                    <p class="description-text">{{ product.description }}</p>
+                </div>
+
+                <!-- Features / Guarantees -->
+                <div class="service-badges">
+                    <div class="service-item">
+                        <span>🔄</span>
+                        <p>7 Days Replacement</p>
+                    </div>
+                    <div class="service-item">
+                        <span>🚚</span>
+                        <p>Free Delivery</p>
+                    </div>
+                    <div class="service-item">
+                        <span>🛡️</span>
+                        <p>1 Year Warranty</p>
+                    </div>
+                </div>
+
+                <!-- Purchase Buttons -->
+                <div class="action-buttons-pane">
+                    <!-- Buy Now Button -->
+                    <a href="/user/buy-now/{{ product.product_id }}" class="btn-purchase btn-buy-now">
+                        <span>⚡ Buy Now</span>
+                    </a>
+
+                    <!-- Add to Cart (POST form for standard compliance) -->
+                    <form method="POST" action="/user/add-to-cart/{{ product.product_id }}" class="cart-form-inline">
+                        <button type="submit" class="btn-purchase btn-add-cart">
+                            <span>🛒 Add to Cart</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="back-link-wrapper">
+                    <a href="/user/products" class="back-link">&larr; Back to Products Catalog</a>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

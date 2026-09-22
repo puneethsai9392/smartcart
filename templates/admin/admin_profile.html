@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}
+Admin Profile - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+
+    <!-- Header -->
+    <div class="profile-header">
+        <div class="breadcrumb">
+            <a href="/admin-dashboard">Dashboard</a>
+            <span>&rsaquo;</span>
+            <span>Admin Profile</span>
+        </div>
+        <h1 class="page-title">Admin Account Profile</h1>
+        <p class="page-subtitle">Manage your personal merchant details, login credentials, and avatar</p>
+    </div>
+
+    <!-- Main Card -->
+    <div class="profile-card">
+
+        <!-- Avatar Showcase -->
+        <div class="avatar-strip">
+            <div class="avatar-circle">
+                {% if admin.profile_image %}
+                    <img
+                        src="/static/uploads/admin_profiles/{{ admin.profile_image }}"
+                        alt="{{ admin.name }}"
+                        class="avatar-img"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%232874f0%22/><text fill=%22%23fff%22 x=%2250%%22 y=%2250%%22 font-size=%2236%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22>A</text></svg>';"
+                    >
+                {% else %}
+                    <span class="avatar-initial">{{ admin.name[0]|upper if admin.name else 'A' }}</span>
+                {% endif %}
+            </div>
+            <div class="avatar-text">
+                <h2 class="admin-display-name">{{ admin.name }}</h2>
+                <p class="admin-display-email">{{ admin.email }}</p>
+                <span class="badge-role">System Administrator</span>
+            </div>
+        </div>
+
+        <!-- Update Form -->
+        <form method="POST" action="/admin/profile" enctype="multipart/form-data" class="profile-form">
+
+            <!-- Full Name -->
+            <div class="form-group">
+                <label for="name" class="form-label">Full Name *</label>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    class="form-input"
+                    value="{{ admin.name }}"
+                    required
+                >
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address *</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    class="form-input"
+                    value="{{ admin.email }}"
+                    required
+                >
+            </div>
+
+            <!-- New Password -->
+            <div class="form-group">
+                <label for="password" class="form-label">New Password (Leave blank to keep current)</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-input"
+                    placeholder="Enter new password if changing"
+                >
+            </div>
+
+            <!-- Profile Image -->
+            <div class="form-group">
+                <label for="profile_image" class="form-label">Upload New Profile Avatar (Optional)</label>
+                <input
+                    type="file"
+                    id="profile_image"
+                    name="profile_image"
+                    accept="image/*"
+                    class="file-input"
+                >
+                <span class="field-hint">Recommended format: Square JPG or PNG, min 200x200px.</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    <span>Save Profile Changes</span>
+                </button>
+                <a href="/admin-dashboard" class="btn-cancel">
+                    <span>Back to Dashboard</span>
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}

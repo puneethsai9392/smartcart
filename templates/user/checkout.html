@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Checkout - SmartCart{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="checkout-page">
+
+    <!-- Page Title -->
+    <div class="checkout-page-header">
+        <h1 class="checkout-heading">Checkout</h1>
+        <p class="checkout-subtext">Review your order details before placing</p>
+    </div>
+
+    <div class="checkout-layout">
+
+        <!-- ============= LEFT: DELIVERY + PRODUCT ============= -->
+        <div class="checkout-col-left">
+
+            <!-- Delivery Address Card -->
+            <div class="checkout-card">
+                <div class="checkout-card-head">
+                    <span class="card-head-icon">📍</span>
+                    <h2 class="card-head-title">Delivery Address</h2>
+                    <a href="/user/update-address" class="card-head-edit">Change</a>
+                </div>
+                <div class="checkout-card-body">
+                    <p class="addr-name">{{ address.name }}</p>
+                    <p class="addr-phone">📞 {{ address.phone }}</p>
+                    <p class="addr-line">{{ address.address }}</p>
+                    <p class="addr-city">{{ address.city }}, {{ address.state }} — {{ address.pincode }}</p>
+                </div>
+            </div>
+
+            <!-- Order Items Card -->
+            <div class="checkout-card">
+                <div class="checkout-card-head">
+                    <span class="card-head-icon">🛍️</span>
+                    <h2 class="card-head-title">Order Summary</h2>
+                </div>
+                <div class="checkout-card-body">
+                    <div class="order-item-row">
+                        <div class="order-item-info">
+                            <p class="order-item-name">{{ product.name }}</p>
+                            <p class="order-item-qty">Quantity: <strong>{{ product.quantity }}</strong></p>
+                        </div>
+                        <p class="order-item-price">₹{{ product.price }}</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============= RIGHT: PRICE SUMMARY + CTA ============= -->
+        <div class="checkout-col-right">
+            <div class="checkout-summary-card">
+                <h2 class="summary-heading">Price Details</h2>
+                <div class="summary-divider-top"></div>
+
+                <div class="summary-row">
+                    <span>Price ({{ product.quantity }} item{{ 's' if product.quantity > 1 else '' }})</span>
+                    <span>₹{{ product.price * product.quantity }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Delivery Charges</span>
+                    <span class="summary-free">FREE</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row summary-total-row">
+                    <span>Total Amount</span>
+                    <span class="summary-total-amount">₹{{ product.price * product.quantity }}</span>
+                </div>
+                <div class="summary-divider"></div>
+
+                <p class="summary-saving">
+                    🎉 You save <strong>₹0</strong> on this order!
+                </p>
+
+                <a href="/user/pay" class="btn-place-order">
+                    Continue to Payment →
+                </a>
+
+                <a href="/user/products" class="btn-continue-shopping">
+                    ← Continue Shopping
+                </a>
+
+                <div class="summary-secure-note">
+                    🔒 Safe and Secure Payments. 100% Authentic products.
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

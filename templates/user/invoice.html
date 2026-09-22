@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SmartCart Invoice #{{ order.order_id }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 28pt 32pt 28pt 32pt;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9.5pt;
+            color: #1e293b;
+            background-color: #ffffff;
+            line-height: 1.4;
+        }
+
+        /* Container */
+        .invoice-wrapper {
+            width: 100%;
+        }
+
+        /* ================= HEADER ================= */
+        .header-table {
+            width: 100%;
+            margin-bottom: 12pt;
+            border-bottom: 2pt solid #2563eb;
+            padding-bottom: 12pt;
+        }
+
+        .brand-name {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #2563eb;
+            letter-spacing: -0.5pt;
+        }
+
+        .brand-slogan {
+            font-size: 9.5pt;
+            color: #475569;
+            font-weight: bold;
+            margin-top: 2pt;
+        }
+
+        .brand-subtext {
+            font-size: 8pt;
+            color: #64748b;
+            margin-top: 2pt;
+        }
+
+        .invoice-main-title {
+            font-size: 22pt;
+            font-weight: bold;
+            color: #0f172a;
+            text-align: right;
+            letter-spacing: 0.5pt;
+        }
+
+        .badge-paid {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1pt solid #86efac;
+            font-size: 8pt;
+            font-weight: bold;
+            padding: 2pt 6pt;
+            text-align: center;
+        }
+
+        .meta-text {
+            font-size: 8.5pt;
+            color: #475569;
+            text-align: right;
+            line-height: 1.5;
+        }
+
+        /* ================= DETAILS BOXES ================= */
+        .details-table {
+            width: 100%;
+            margin-top: 8pt;
+            margin-bottom: 14pt;
+        }
+
+        .box-card {
+            background-color: #f8fafc;
+            border: 1pt solid #cbd5e1;
+            padding: 0pt;
+            vertical-align: top;
+        }
+
+        .box-header {
+            background-color: #e2e8f0;
+            color: #0f172a;
+            font-size: 9pt;
+            font-weight: bold;
+            padding: 6pt 10pt;
+            letter-spacing: 0.5pt;
+            border-bottom: 1pt solid #cbd5e1;
+        }
+
+        .box-body {
+            padding: 8pt 10pt;
+            font-size: 9pt;
+            line-height: 1.55;
+            color: #334155;
+        }
+
+        .box-body strong {
+            color: #0f172a;
+        }
+
+        /* ================= ORDER ITEMS ================= */
+        .section-header {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 6pt;
+            margin-top: 4pt;
+            letter-spacing: 0.3pt;
+        }
+
+        .items-table {
+            width: 100%;
+            border: 1pt solid #cbd5e1;
+            margin-bottom: 12pt;
+        }
+
+        .items-table th {
+            background-color: #1e293b;
+            color: #ffffff;
+            font-size: 8.5pt;
+            font-weight: bold;
+            padding: 7pt 8pt;
+            text-align: left;
+        }
+
+        .items-table td {
+            font-size: 8.5pt;
+            padding: 7pt 8pt;
+            color: #1e293b;
+            border-top: 1pt solid #e2e8f0;
+        }
+
+        .row-even {
+            background-color: #ffffff;
+        }
+
+        .row-odd {
+            background-color: #f8fafc;
+        }
+
+        .col-num {
+            width: 7%;
+            text-align: center;
+        }
+
+        .col-desc {
+            width: 45%;
+        }
+
+        .col-qty {
+            width: 12%;
+            text-align: center;
+        }
+
+        .col-price {
+            width: 18%;
+            text-align: right;
+        }
+
+        .col-total {
+            width: 18%;
+            text-align: right;
+        }
+
+        /* ================= TOTALS SUMMARY ================= */
+        .summary-table {
+            width: 100%;
+            margin-top: 6pt;
+            margin-bottom: 16pt;
+        }
+
+        .summary-notes {
+            vertical-align: top;
+            padding: 8pt 10pt;
+            background-color: #f8fafc;
+            border: 1pt solid #e2e8f0;
+            font-size: 8pt;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .summary-calc {
+            vertical-align: top;
+            width: 48%;
+        }
+
+        .calc-row-label {
+            font-size: 9pt;
+            color: #64748b;
+            padding: 3pt 8pt;
+            text-align: right;
+        }
+
+        .calc-row-value {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #1e293b;
+            padding: 3pt 8pt;
+            text-align: right;
+        }
+
+        .calc-grand-box {
+            background-color: #eff6ff;
+            border: 1.5pt solid #2563eb;
+            padding: 6pt 8pt;
+            margin-top: 4pt;
+        }
+
+        .grand-label {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #1d4ed8;
+            text-align: right;
+        }
+
+        .grand-value {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #1e3a8a;
+            text-align: right;
+        }
+
+        /* ================= FOOTER ================= */
+        .footer-table {
+            width: 100%;
+            margin-top: 20pt;
+            border-top: 1pt solid #cbd5e1;
+            padding-top: 10pt;
+            text-align: center;
+        }
+
+        .footer-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .footer-text {
+            font-size: 8pt;
+            color: #64748b;
+            margin-top: 2pt;
+        }
+    </style>
+</head>
+<body>
+
+<div class="invoice-wrapper">
+
+    <!-- ================= HEADER ================= -->
+    <table class="header-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <td style="width: 58%; vertical-align: top;">
+                <div class="brand-name">SmartCart</div>
+                <div class="brand-slogan">Your Smart Shopping Destination</div>
+                <div class="brand-subtext">support@smartcart.com &bull; +91 98765 43210 &bull; www.smartcart.com</div>
+            </td>
+            <td style="width: 42%; vertical-align: top; text-align: right;">
+                <div class="invoice-main-title">INVOICE</div>
+                <div style="margin-top: 3pt; margin-bottom: 4pt;">
+                    <span class="badge-paid">PAID</span>
+                </div>
+                <div class="meta-text">
+                    <strong>Order ID:</strong> #{{ order.order_id }}<br>
+                    <strong>Date:</strong> {{ order.created_at }}<br>
+                    {% if order.razorpay_payment_id %}
+                    <strong>Payment ID:</strong> {{ order.razorpay_payment_id }}
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ================= CUSTOMER & DELIVERY ADDRESS ================= -->
+    <table class="details-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <!-- Customer Details -->
+            <td class="box-card" style="width: 48%;">
+                <div class="box-header">CUSTOMER DETAILS</div>
+                <div class="box-body">
+                    <strong>User ID:</strong> {{ order.user_id }}<br>
+                    <strong>Name:</strong> {{ user.name if user and user.name else (address.name if address else 'Customer') }}<br>
+                    {% if user and user.email %}
+                    <strong>Email:</strong> {{ user.email }}<br>
+                    {% endif %}
+                    <strong>Phone:</strong> {{ user.phone if user and user.phone else (address.phone if address and address.phone else 'XXXXX') }}
+                </div>
+            </td>
+
+            <!-- Spacer -->
+            <td style="width: 4%;"></td>
+
+            <!-- Delivery Address -->
+            <td class="box-card" style="width: 48%;">
+                <div class="box-header">DELIVERY ADDRESS</div>
+                <div class="box-body">
+                    {% if address and address.address %}
+                        <strong>{{ address.name or (user.name if user else 'Customer') }}</strong><br>
+                        {{ address.address }}<br>
+                        {{ address.city }}{% if address.state %}, {{ address.state }}{% endif %}<br>
+                        <strong>PIN:</strong> {{ address.pincode or 'XXXXX' }}<br>
+                        <strong>Phone:</strong> {{ address.phone or 'XXXXX' }}
+                    {% elif order.shipping_address %}
+                        <strong>{{ order.shipping_name or (user.name if user else 'Customer') }}</strong><br>
+                        {{ order.shipping_address }}<br>
+                        {{ order.shipping_city }}{% if order.shipping_state %}, {{ order.shipping_state }}{% endif %}<br>
+                        <strong>PIN:</strong> {{ order.shipping_pincode or 'XXXXX' }}<br>
+                        <strong>Phone:</strong> {{ order.shipping_phone or 'XXXXX' }}
+                    {% else %}
+                        <strong>{{ user.name if user else 'Customer' }}</strong><br>
+                        Street / Area<br>
+                        Hyderabad, Telangana<br>
+                        <strong>PIN:</strong> 500001<br>
+                        <strong>Phone:</strong> {{ user.phone if user and user.phone else 'XXXXX' }}
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ================= ORDER ITEMS ================= -->
+    <div class="section-header">ORDER ITEMS</div>
+
+    <table class="items-table" cellpadding="0" cellspacing="0">
+        <thead>
+            <tr>
+                <th class="col-num">#</th>
+                <th class="col-desc">Product</th>
+                <th class="col-qty">Qty</th>
+                <th class="col-price">Price</th>
+                <th class="col-total">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for it in items %}
+            <tr class="{{ 'row-even' if loop.index % 2 == 0 else 'row-odd' }}">
+                <td class="col-num">{{ loop.index }}</td>
+                <td class="col-desc"><strong>{{ it.product_name }}</strong></td>
+                <td class="col-qty">{{ it.quantity }}</td>
+                <td class="col-price">Rs. {{ "%.2f"|format(it.price|float) }}</td>
+                <td class="col-total"><strong>Rs. {{ "%.2f"|format((it.price|float) * (it.quantity|int)) }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ================= GRAND TOTAL & SUMMARY ================= -->
+    <table class="summary-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <!-- Left: Payment details & Security notice -->
+            <td class="summary-notes" style="width: 48%;">
+                <strong style="color: #0f172a; font-size: 8.5pt;">PAYMENT INFORMATION</strong><br>
+                <strong>Status:</strong> Completed (Paid via Razorpay)<br>
+                {% if order.razorpay_payment_id %}
+                <strong>Transaction ID:</strong> {{ order.razorpay_payment_id }}<br>
+                {% endif %}
+                <strong>Mode:</strong> Online Payment<br>
+                <div style="margin-top: 5pt; color: #64748b; font-size: 7.5pt;">
+                    All items are inclusive of applicable GST/Taxes.<br>
+                    Need assistance with this order? Email us at support@smartcart.com
+                </div>
+            </td>
+
+            <!-- Spacer -->
+            <td style="width: 4%;"></td>
+
+            <!-- Right: Calculations & Grand Total -->
+            <td class="summary-calc" style="width: 48%;">
+                <table style="width: 100%;" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td class="calc-row-label">Item Subtotal:</td>
+                        <td class="calc-row-value">Rs. {{ "%.2f"|format(order.amount|float) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="calc-row-label">Shipping &amp; Delivery:</td>
+                        <td class="calc-row-value" style="color: #15803d;">FREE</td>
+                    </tr>
+                    <tr>
+                        <td class="calc-row-label">Estimated Tax:</td>
+                        <td class="calc-row-value" style="color: #64748b;">Included</td>
+                    </tr>
+                </table>
+
+                <table class="calc-grand-box" style="width: 100%;" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td class="grand-label" style="width: 40%; vertical-align: middle;">GRAND TOTAL:</td>
+                        <td class="grand-value" style="width: 60%; vertical-align: middle;">Rs. {{ "%.2f"|format(order.amount|float) }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ================= FOOTER ================= -->
+    <table class="footer-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>
+                <div class="footer-title">Thank you for shopping with SmartCart!</div>
+                <div class="footer-text">This is a computer-generated invoice and does not require a signature.</div>
+                <div class="footer-text" style="color: #94a3b8; font-size: 7.5pt; margin-top: 3pt;">
+                    SmartCart - Secure, Simple &amp; Smart Shopping &bull; Keep this invoice for any warranty claims.
+                </div>
+            </td>
+        </tr>
+    </table>
+
+</div>
+
+</body>
+</html>

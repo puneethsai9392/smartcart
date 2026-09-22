@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartCart - Online Shopping{% endblock %}</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Common Base CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+
+    <!-- Page Specific CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- =====================================================
+         NAVBAR
+    ====================================================== -->
+    <header class="site-header">
+        <nav class="navbar">
+            <div class="nav-container">
+
+                <!-- Brand Logo -->
+                {% if session.get('admin_id') %}
+                    <a href="/admin-dashboard" class="brand" title="SmartCart Admin Dashboard">
+                        <span class="brand-badge">S</span>
+                        <span class="brand-text">Smart<span class="brand-highlight">Cart</span></span>
+                        <span class="portal-tag admin-tag">Admin</span>
+                    </a>
+                {% elif session.get('user_id') %}
+                    <a href="/user/user-dashboard" class="brand" title="SmartCart Home">
+                        <span class="brand-badge">S</span>
+                        <span class="brand-text">Smart<span class="brand-highlight">Cart</span></span>
+                    </a>
+                {% else %}
+                    <a href="/user/products" class="brand" title="SmartCart Store">
+                        <span class="brand-badge">S</span>
+                        <span class="brand-text">Smart<span class="brand-highlight">Cart</span></span>
+                    </a>
+                {% endif %}
+
+                <!-- Mobile Menu Toggle Button -->
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <!-- Navigation Links -->
+                <div class="nav-menu" id="navMenu">
+                    {% if session.get('admin_id') %}
+                        <!-- Admin Navigation -->
+                        <a href="/admin-dashboard" class="nav-link">Dashboard</a>
+                        <a href="/admin/item-list" class="nav-link">Products</a>
+                        <a href="/admin/add-item" class="nav-link">Add Product</a>
+                        
+
+                        <div class="nav-user-slot">
+                            <span class="user-greeting">Hi, {{ session.get('admin_name') }}</span>
+                            <a href="/admin-logout" class="nav-btn btn-danger">Logout</a>
+                        </div>
+
+                    {% elif session.get('user_id') %}
+                        <!-- User Logged In Navigation -->
+                        <a href="/user/user-dashboard" class="nav-link">Home</a>
+                        <a href="/user/products" class="nav-link">Products</a>
+                        <a href="/user/cart" class="nav-link cart-link">
+                            <span class="cart-icon">🛒</span>
+                            <span>Cart</span>
+                            <span class="cart-badge" id="navCartCount">
+                                {{ session.get('cart', {}).values() | map(attribute='quantity') | sum if session.get('cart') else 0 }}
+                            </span>
+                        </a>
+                        <a href="/user/my-orders" class="nav-link">My Orders</a>
+                        <div class="nav-user-slot">
+                            <span class="user-greeting">Hi, {{ session.get('user_name') }}</span>
+                            <a href="/user/user-logout" class="nav-btn btn-secondary">Logout</a>
+                        </div>
+
+                    {% else %}
+    <!-- Guest Navigation -->
+    <a href="/user/products" class="nav-link">Browse Products</a>
+    <div class="nav-auth-buttons">
+        <a href="/user/user-login" class="nav-btn btn-outline">User Login</a>
+        <a href="/user-signup" class="nav-btn btn-primary">Sign Up</a>
+    </div>
+{% endif %}
+                    
+                </div>
+
+            </div>
+        </nav>
+    </header>
+
+    <!-- =====================================================
+         FLASH MESSAGES
+    ====================================================== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-wrapper">
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        {% set alert_class = category %}
+                        {% if category == 'danger' or category == 'error' %}
+                            {% set alert_class = 'error' %}
+                        {% elif category == 'success' %}
+                            {% set alert_class = 'success' %}
+                        {% elif category == 'warning' %}
+                            {% set alert_class = 'warning' %}
+                        {% else %}
+                            {% set alert_class = 'info' %}
+                        {% endif %}
+                        <div class="alert-message {{ alert_class }}">
+                            <span class="alert-indicator"></span>
+                            <span class="alert-text">{{ message }}</span>
+                            <button type="button" class="alert-dismiss" onclick="this.parentElement.remove();">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- =====================================================
+         MAIN PAGE CONTENT
+    ====================================================== -->
+    <main class="page-content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- =====================================================
+         GLOBAL FOOTER
+    ====================================================== -->
+    <footer class="site-footer">
+        <div class="footer-container">
+
+            <!-- Col 1: Brand & About -->
+            <div class="footer-col footer-col-about">
+                <div class="footer-brand">
+                    <span class="brand-badge">S</span>
+                    <span class="brand-text">Smart<span class="brand-highlight">Cart</span></span>
+                </div>
+                <p class="footer-desc">
+                    Your trusted online shopping destination for top-quality items, seamless orders, instant digital payments, and rapid doorstep delivery.
+                </p>
+                <div class="footer-features">
+                    <span>⚡ Fast Delivery</span>
+                    <span>🔒 Secure Payments</span>
+                    <span>✨ Easy Returns</span>
+                </div>
+            </div>
+
+            <!-- Links Group (Quick Links & Customer Support) -->
+            <div class="footer-links-container">
+                <!-- Col 2: Quick Links -->
+                <div class="footer-col footer-col-links">
+                    <h4 class="footer-heading">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="/user/products">All Products</a></li>
+                        <li><a href="/user/cart">Shopping Cart</a></li>
+                        <li><a href="/user/user-login">Customer Login</a></li>
+                        <li><a href="/user-signup">Create Account</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Customer Support -->
+                <div class="footer-col footer-col-support">
+                    <h4 class="footer-heading">Customer Support</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Track Orders</a></li>
+                        <li><a href="#">Shipping & Returns</a></li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer Bottom Legal Strip -->
+        <div class="footer-bottom">
+            <div class="footer-bottom-content">
+                <p class="copyright-text">
+                    &copy; 2026 <strong>SmartCart</strong>. All Rights Reserved.
+                </p>
+                <div class="legal-links">
+                    <a href="#">Privacy Policy</a>
+                    <span class="divider">&bull;</span>
+                    <a href="#">Terms of Service</a>
+                    <span class="divider">&bull;</span>
+                    <a href="#">Security</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Base Mobile Menu Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.getElementById('mobileMenuBtn');
+            var menu = document.getElementById('navMenu');
+            if (btn && menu) {
+                btn.addEventListener('click', function() {
+                    menu.classList.toggle('active');
+                    btn.classList.toggle('open');
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

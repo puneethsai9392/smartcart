@@ -1,0 +1,11 @@
+Flask==3.0.3
+Flask-Bcrypt==1.0.1
+Flask-Mail==0.10.0
+razorpay==2.0.1
+xhtml2pdf==0.2.20
+reportlab==5.0.1
+bcrypt==5.0.0
+itsdangerous==2.2.0
+python-dotenv==1.0.1
+Werkzeug==3.0.3
+gunicorn==22.0.0

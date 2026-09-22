@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}
+View {{ product.name }} - SmartCart Admin
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/view_item.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="view-item-container">
+
+    <!-- Breadcrumb & Header -->
+    <div class="view-header">
+        <div class="breadcrumb">
+            <a href="/admin-dashboard">Dashboard</a>
+            <span>&rsaquo;</span>
+            <a href="/admin/item-list">Products</a>
+            <span>&rsaquo;</span>
+            <span>Product Details</span>
+        </div>
+        <div class="header-action-row">
+            <div>
+                <h1 class="page-title">{{ product.name }}</h1>
+                <p class="page-subtitle">Item ID: #{{ product.product_id }} &bull; Listed in {{ product.category }}</p>
+            </div>
+            <div class="header-btns">
+                <a href="/admin/update-item/{{ product.product_id }}" class="btn-edit-item">
+                    <span>✏️ Edit Item</span>
+                </a>
+                <a href="/admin/item-list" class="btn-back">
+                    <span>&larr; Back to Inventory</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Detail Layout Card -->
+    <div class="detail-card">
+        <div class="detail-grid">
+
+            <!-- Left: Product Image Showcase -->
+            <div class="image-showcase">
+                <div class="image-frame">
+                    <img
+                        src="/static/uploads/product_images/{{ product.image }}"
+                        alt="{{ product.name }}"
+                        class="showcase-img"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22><rect fill=%22%23eee%22 width=%22300%22 height=%22300%22/><text fill=%22%23999%22 x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22>No Image</text></svg>';"
+                    >
+                </div>
+            </div>
+
+            <!-- Right: Product Information Table / Details -->
+            <div class="info-showcase">
+                <div class="price-banner">
+                    <span class="price-label">Selling Price</span>
+                    <span class="price-amount">₹{{ product.price }}</span>
+                </div>
+
+                <div class="info-list">
+                    <div class="info-row">
+                        <span class="info-key">Product ID</span>
+                        <span class="info-val">#{{ product.product_id }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">Title</span>
+                        <span class="info-val"><strong>{{ product.name }}</strong></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">Category</span>
+                        <span class="info-val"><span class="badge-cat">{{ product.category }}</span></span>
+                    </div>
+                    <div class="info-row description-row">
+                        <span class="info-key">Description</span>
+                        <p class="info-desc">{{ product.description }}</p>
+                    </div>
+                </div>
+
+                <div class="bottom-action-bar">
+                    <a href="/admin/update-item/{{ product.product_id }}" class="btn-primary-action">Edit This Product</a>
+                    <a href="/admin/item-list" class="btn-secondary-action">Return to List</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

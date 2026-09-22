@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Home - SmartCart{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_home.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="home-page">
+
+    <!-- ===================== WELCOME HERO ===================== -->
+    <div class="home-hero">
+        <span class="hero-badge">👋 Welcome back</span>
+        <h1 class="hero-title">Hi, {{ user_name }}!<br>Discover what's new today.</h1>
+        <p class="hero-sub">Fresh arrivals, best deals, and your favourite brands — all in one place.</p>
+        <a href="/user/products" class="hero-cta-btn">
+            Shop All Products <span>→</span>
+        </a>
+    </div>
+
+    <!-- ===================== TRUST STRIP ===================== -->
+    <div class="trust-strip">
+        <div class="trust-item">
+            <span>🚚</span>
+            <span>Free Delivery</span>
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-item">
+            <span>🔒</span>
+            <span>Secure Payments</span>
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-item">
+            <span>🔄</span>
+            <span>Easy Returns</span>
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-item">
+            <span>⭐</span>
+            <span>Verified Products</span>
+        </div>
+    </div>
+
+    <!-- ===================== FEATURED PRODUCTS ===================== -->
+    <div class="home-section">
+        <div class="section-header">
+            <h2 class="section-title">🔥 Latest Products</h2>
+            <a href="/user/products" class="section-view-all">View All →</a>
+        </div>
+
+        {% if products %}
+        <div class="home-product-grid">
+            {% for product in products %}
+            <div class="home-product-card">
+
+                <!-- Category Tag -->
+                <div class="hpc-top">
+                    <span class="hpc-category">{{ product.category }}</span>
+                </div>
+
+                <!-- Product Image -->
+                <a href="/user/product/{{ product.product_id }}" class="hpc-img-wrapper">
+                    <img
+                        src="/static/uploads/product_images/{{ product.image }}"
+                        alt="{{ product.name }}"
+                        class="hpc-img"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22160%22><rect fill=%22%23f8fafc%22 width=%22200%22 height=%22160%22/><text fill=%22%2394a3b8%22 x=%2250%%22 y=%2250%%22 font-family=%22sans-serif%22 font-size=%2213%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22>No Image</text></svg>';"
+                    >
+                </a>
+
+                <!-- Product Info -->
+                <div class="hpc-info">
+                    <h3 class="hpc-name">
+                        <a href="/user/product/{{ product.product_id }}">{{ product.name }}</a>
+                    </h3>
+                    <div class="hpc-rating">
+                        <span class="hpc-rating-badge">{{ product.rating or '4.3' }} ★</span>
+                        <span class="hpc-rating-count">({{ product.reviews_count|format_count if product.reviews_count else '2.1k' }})</span>
+                    </div>
+                    <div class="hpc-price-row">
+                        <span class="hpc-price">₹{{ product.price }}</span>
+                        <span class="hpc-free-del">Free Delivery</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="hpc-actions">
+                    <button type="button" class="hpc-btn-cart" onclick="addToCartHome({{ product.product_id }})">
+                        🛒 Add to Cart
+                    </button>
+                    <a href="/user/buy-now/{{ product.product_id }}" class="hpc-btn-buy">
+                        ⚡ Buy Now
+                    </a>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="home-view-more">
+            <a href="/user/products" class="btn-view-more">Browse All Products →</a>
+        </div>
+
+        {% else %}
+        <div class="home-empty">
+            <span class="home-empty-icon">🛍️</span>
+            <h3>No products yet</h3>
+            <p>Check back soon for fresh arrivals!</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Toast Notification -->
+<div id="homeToast" class="home-toast">
+    <span class="home-toast-icon">✓</span>
+    <span id="homeToastMsg">Product added to cart!</span>
+</div>
+
+<script>
+function addToCartHome(productId) {
+    fetch(`/user/add-to-cart/${productId}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+        var navCounter = document.getElementById('navCartCount');
+        if (navCounter && data.cart_count !== undefined) {
+            navCounter.innerText = data.cart_count;
+        }
+        showHomeToast(data.message || (data.success ? 'Product added to cart!' : 'Could not add product'));
+    })
+    .catch(() => showHomeToast('Something went wrong!'));
+}
+
+function showHomeToast(msg) {
+    var toast = document.getElementById('homeToast');
+    var toastMsg = document.getElementById('homeToastMsg');
+    if (toastMsg) toastMsg.innerText = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2800);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}
+Products Catalog - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/products.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="store-container">
+
+    <!-- Store Filter & Search Bar -->
+    <div class="store-filter-bar">
+        <div class="store-header-text">
+            <h1 class="store-title">Explore All Products</h1>
+            <p class="store-subtitle">Browse genuine brands, trending items, and lowest price guarantees</p>
+        </div>
+
+        <div class="store-filter-controls">
+            <!-- Search Form -->
+            <form method="GET" action="/user/products" class="store-search-form">
+                <div class="search-input-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input
+                        type="text"
+                        name="search"
+                        class="search-input"
+                        placeholder="Search products, brands, essentials..."
+                        value="{{ request.args.get('search', '') }}"
+                    >
+                </div>
+                <button type="submit" class="store-btn-filter">Search</button>
+                {% if request.args.get('search') %}
+                    <a href="/user/products" class="clear-search-btn" title="Clear search">&times; Clear</a>
+                {% endif %}
+            </form>
+
+            <!-- Category Filter Form -->
+            <form method="GET" action="/user/products" class="store-category-form">
+                <select name="category" class="category-select" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.category }}" {% if request.args.get('category') == cat.category %} selected {% endif %}>
+                        {{ cat.category }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Grid Section -->
+    <div class="product-grid product-container">
+        {% for product in products %}
+        <div class="product-card">
+
+            <!-- Card Top: Category Tag -->
+            <div class="card-top-strip">
+                <span class="product-category-tag">{{ product.category }}</span>
+            </div>
+
+            <!-- Product Image Container -->
+            <a href="/user/product/{{ product.product_id }}" class="product-img-wrapper" title="View {{ product.name }}">
+                <img
+                    src="{% if product.image and (product.image.startswith('http://') or product.image.startswith('https://')) %}{{ product.image }}{% else %}/static/uploads/product_images/{{ product.image }}{% endif %}"
+                    alt="{{ product.name }}"
+                    class="product-img"
+                    loading="lazy"
+                    onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 220 180%22 width=%22100%25%22 height=%22100%25%22><rect fill=%22%23f8fafc%22 width=%22100%25%22 height=%22100%25%22/><text fill=%22%2394a3b8%22 x=%2250%25%22 y=%2250%25%22 font-family=%22sans-serif%22 font-size=%2214%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22>SmartCart Item</text></svg>';"
+                >
+            </a>
+
+            <!-- Product Details Content -->
+            <div class="product-info">
+                <h3 class="product-name">
+                    <a href="/user/product/{{ product.product_id }}" title="{{ product.name }}">
+                        {{ product.name }}
+                    </a>
+                </h3>
+
+                {% if product.description %}
+                <p class="product-description" title="{{ product.description }}">
+                    {{ product.description }}
+                </p>
+                {% endif %}
+
+                <!-- Rating Display -->
+                <div class="product-rating">
+                    <span class="rating-badge">{{ product.rating or '4.4' }} ★</span>
+                    <span class="rating-count">({{ product.reviews_count|format_count if product.reviews_count else '1.2k' }})</span>
+                </div>
+
+                <!-- Price Block -->
+                <div class="product-price-block">
+                    <span class="price-current">₹{{ product.price }}</span>
+                    <span class="free-delivery-badge">Free Delivery</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons Strip -->
+            <div class="product-card-actions">
+                {% if session.get('user_id') %}
+                <button type="button" class="btn-cart-action" onclick="addToCart({{ product.product_id }})">
+                    <span>🛒 Add</span>
+                </button>
+                <a href="/user/buy-now/{{ product.product_id }}" class="btn-buy-action">
+                    <span>⚡ Buy Now</span>
+                </a>
+                {% else %}
+                <a href="/user/user-login?next=/user/buy-now/{{ product.product_id }}" class="btn-buy-action">
+                    <span>⚡ Buy Now</span>
+                </a>
+                {% endif %}
+            </div>
+
+            <a href="/user/product/{{ product.product_id }}" class="card-inspect-link">View Details &rarr;</a>
+
+        </div>
+        {% else %}
+        <div class="empty-products-container">
+            <div class="empty-products-card">
+                <span class="empty-icon">🔍</span>
+                <h2>No Products Found</h2>
+                <p>We couldn't find any products matching your current search or category filter.</p>
+                <a href="/user/products" class="btn-reset-filter">View All Products</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Hidden Cart Count for Legacy Compatibility -->
+<span id="cartCount" style="display:none;">{{ session.get('cart', {}).values() | map(attribute='quantity') | sum }}</span>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast-notification">
+    <span class="toast-icon">✓</span>
+    <span id="toastMessage">Product added to cart!</span>
+</div>
+
+<!-- Add To Cart Script -->
+<script>
+    function addToCart(productId) {
+        fetch(`/user/add-to-cart/${productId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                var legacyCounter = document.getElementById('cartCount');
+                if (legacyCounter) legacyCounter.innerText = data.cart_count;
+
+                var navCounter = document.getElementById('navCartCount');
+                if (navCounter) navCounter.innerText = data.cart_count;
+
+                showToast(data.message || "Product added to cart!");
+            } else {
+                showToast(data.message || "Could not add product");
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            showToast("Something went wrong!");
+        });
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMessage');
+        if (toastMsg) toastMsg.innerText = message;
+        toast.classList.add('show');
+
+        setTimeout(function () {
+            toast.classList.remove('show');
+        }, 2800);
+    }
+</script>
+{% endblock %}

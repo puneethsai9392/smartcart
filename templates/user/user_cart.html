@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}
+My Shopping Cart - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="cart-page-container">
+
+    <!-- Page Header -->
+    <div class="cart-header">
+        <div>
+            <h1 class="cart-title">My Shopping Cart</h1>
+            <p class="cart-subtitle">Review items, adjust quantities, or proceed to secure payment</p>
+        </div>
+        <a href="/user/products" class="btn-continue-shopping">
+            <span>&larr; Continue Shopping</span>
+        </a>
+    </div>
+
+    {% if cart %}
+    <div class="cart-layout-grid">
+
+        <!-- Left Column: Items Table & Select All -->
+        <div class="cart-items-column">
+
+            <!-- Select All Strip -->
+            <div class="select-all-card">
+                <label class="select-all-label">
+                    <input
+                        type="checkbox"
+                        id="selectAll"
+                        class="custom-checkbox"
+                        onchange="selectAllProducts()"
+                    >
+                    <span class="select-all-text">Select All Items for Checkout</span>
+                </label>
+                <span class="select-hint">Select individual items or all items below to order</span>
+            </div>
+
+            <!-- Table Card -->
+            <div class="cart-table-card">
+                <div class="table-responsive">
+                    <table class="cart-table">
+                        <thead>
+                            <tr>
+                                <th class="col-select">Select</th>
+                                <th class="col-product">Product</th>
+                                <th class="col-image">Image</th>
+                                <th class="col-price">Price</th>
+                                <th class="col-qty">Quantity</th>
+                                <th class="col-subtotal">Amount</th>
+                                <th class="col-action">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pid, item in cart.items() %}
+                            <tr class="cart-row">
+
+                                <!-- Cell 0: Checkbox -->
+                                <td class="col-select" align="center">
+                                    <input
+                                        type="checkbox"
+                                        class="product-checkbox custom-checkbox"
+                                        value="{{ pid }}"
+                                        onchange="updateSelection()"
+                                    >
+                                </td>
+
+                                <!-- Cell 1: Product Name -->
+                                <td class="col-product">
+                                    <span class="cart-item-name">{{ item.name }}</span>
+                                </td>
+
+                                <!-- Cell 2: Image -->
+                                <td class="col-image" align="center">
+                                    <div class="cart-thumb-box">
+                                        <img
+                                            src="{{ url_for('static', filename='uploads/product_images/' + item.image) }}"
+                                            alt="{{ item.name }}"
+                                            class="cart-thumb"
+                                            onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><rect fill=%22%23eee%22 width=%2260%22 height=%2260%22/><text fill=%22%23999%22 x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22>Img</text></svg>';"
+                                        >
+                                    </div>
+                                </td>
+
+                                <!-- Cell 3: Price -->
+                                <td class="col-price">
+                                    <span class="item-unit-price">₹{{ "%.2f"|format(item.price) }}</span>
+                                </td>
+
+                                <!-- Cell 4: Quantity Stepper -->
+                                <td class="col-qty">
+                                    <div class="quantity-stepper">
+                                        <!-- Decrease Form -->
+                                        <form method="POST" action="/user/cart/decrease/{{ pid }}" class="qty-form">
+                                            <button type="submit" class="qty-btn btn-minus" title="Decrease quantity">−</button>
+                                        </form>
+
+                                        <!-- Quantity Display -->
+                                        <span class="qty-number">{{ item.quantity }}</span>
+
+                                        <!-- Increase Form -->
+                                        <form method="POST" action="/user/cart/increase/{{ pid }}" class="qty-form">
+                                            <button type="submit" class="qty-btn btn-plus" title="Increase quantity">+</button>
+                                        </form>
+                                    </div>
+                                </td>
+
+                                <!-- Cell 5: Amount (Calculated in JS with row.cells[5]) -->
+                                <td class="col-subtotal">
+                                    <strong class="item-row-total">₹{{ "%.2f"|format(item.price * item.quantity) }}</strong>
+                                </td>
+
+                                <!-- Cell 6: Remove Form -->
+                                <td class="col-action">
+                                    <form method="POST" action="/user/cart/remove/{{ pid }}" class="remove-form">
+                                        <button type="submit" class="btn-remove-item" title="Remove from cart">
+                                            <span>🗑️ Remove</span>
+                                        </button>
+                                    </form>
+                                </td>
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Sticky Summary & Checkout Card -->
+        <div class="cart-summary-column">
+            <div class="summary-card">
+                <h2 class="summary-title">Order Summary</h2>
+
+                <div class="summary-rows">
+                    <div class="summary-row">
+                        <span>Total Items in Cart</span>
+                        <strong>{{ cart_count }}</strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Delivery Charges</span>
+                        <span class="badge-free">FREE</span>
+                    </div>
+
+                    <div class="summary-row highlight-row">
+                        <span>Selected Items</span>
+                        <strong id="selectedCount">0</strong>
+                    </div>
+
+                    <hr class="summary-divider">
+
+                    <div class="summary-total-row">
+                        <span>Selected Total:</span>
+                        <span class="total-amount">₹<strong id="selectedTotal">0.00</strong></span>
+                    </div>
+                </div>
+
+                <!-- Checkout Form -->
+                <form
+                    method="POST"
+                    action="/user/selected-checkout"
+                    onsubmit="return validateSelection()"
+                    class="checkout-form"
+                >
+                    <!-- Container for dynamic product_ids inputs -->
+                    <div id="selectedProducts"></div>
+
+                    <button
+                        type="submit"
+                        id="checkoutButton"
+                        class="btn-checkout"
+                        disabled
+                    >
+                        <span>Proceed to Checkout &rarr;</span>
+                    </button>
+                </form>
+
+                <div class="security-strip">
+                    <p>🔒 100% Safe & Secure Online Payment</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {% else %}
+    <!-- Empty Cart State -->
+    <div class="empty-cart-card">
+        <div class="empty-cart-icon">🛒</div>
+        <h2 class="empty-cart-heading">Your Cart is Currently Empty</h2>
+        <p class="empty-cart-desc">Looks like you haven't added any products to your cart yet. Discover trending deals and seasonal specials today!</p>
+        <a href="/user/products" class="btn-start-shopping">
+            <span>Explore Products &rarr;</span>
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Retain EXACT JavaScript functions and IDs -->
+<script>
+function getCheckboxes() {
+    return document.querySelectorAll('.product-checkbox');
+}
+
+function selectAllProducts() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = getCheckboxes();
+
+    checkboxes.forEach(function(checkbox) {
+        checkbox.checked = selectAll.checked;
+    });
+
+    updateSelection();
+}
+
+function updateSelection() {
+    const checkboxes = getCheckboxes();
+    const selectedProducts = document.getElementById('selectedProducts');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectedTotal = document.getElementById('selectedTotal');
+    const checkoutButton = document.getElementById('checkoutButton');
+
+    selectedProducts.innerHTML = '';
+    let count = 0;
+    let total = 0;
+
+    checkboxes.forEach(function(checkbox) {
+        if (checkbox.checked) {
+            count++;
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'product_ids';
+            input.value = checkbox.value;
+            selectedProducts.appendChild(input);
+
+            // Fetch amount text from cell index 5
+            const row = checkbox.closest('tr');
+            const amountText = row.cells[5].innerText.replace('₹', '').replace(',', '').trim();
+            total += parseFloat(amountText) || 0;
+        }
+    });
+
+    selectedCount.innerText = count;
+    selectedTotal.innerText = total.toFixed(2);
+
+    checkoutButton.disabled = count === 0;
+
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll && checkboxes.length > 0) {
+        selectAll.checked = (count === checkboxes.length);
+    }
+}
+
+function validateSelection() {
+    const checkboxes = getCheckboxes();
+    let selected = false;
+
+    checkboxes.forEach(function(checkbox) {
+        if (checkbox.checked) {
+            selected = true;
+        }
+    });
+
+    if (!selected) {
+        alert('Please select at least one product.');
+        return false;
+    }
+
+    return true;
+}
+</script>
+{% endblock %}

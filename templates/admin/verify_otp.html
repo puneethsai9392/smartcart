@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}
+Verify Admin OTP - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/verify_otp.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Header -->
+        <div class="auth-header">
+            <div class="auth-brand-badge">
+                <span>🔐</span>
+            </div>
+            <h1 class="auth-title">Verify Admin OTP</h1>
+            <p class="auth-subtitle">Enter the verification code sent to your registered email and create your password</p>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="/verify-otp" class="auth-form">
+
+            <!-- OTP -->
+            <div class="form-group">
+                <label for="otp" class="form-label">6-Digit OTP Code</label>
+                <div class="input-container">
+                    <input
+                        type="text"
+                        id="otp"
+                        name="otp"
+                        class="form-input otp-input"
+                        placeholder="e.g. 123456"
+                        maxlength="6"
+                        required
+                        autofocus
+                    >
+                </div>
+                <span class="field-hint">Check your email inbox or spam folder for the one-time code.</span>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password" class="form-label">Create Admin Password</label>
+                <div class="input-container">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        placeholder="Create a strong password"
+                        required
+                    >
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="auth-btn">
+                <span>Verify & Complete Registration</span>
+                <span class="btn-arrow">&rarr;</span>
+            </button>
+
+        </form>
+
+        <!-- Footer -->
+        <div class="auth-footer">
+            <p>Didn't receive code? <a href="/admin-signup" class="auth-link">Re-enter Email</a></p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

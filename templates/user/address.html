@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Delivery Address - SmartCart{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/address.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="address-page">
+    <div class="address-wrapper">
+
+        <!-- Left Column: Form -->
+        <div class="address-form-col">
+            <div class="address-form-card">
+
+                <!-- Header -->
+                <div class="addr-form-header">
+                    <span class="addr-form-icon">📍</span>
+                    <div>
+                        <h1 class="addr-form-title">Delivery Address</h1>
+                        <p class="addr-form-sub">
+                            {% if address %}Update your saved address{% else %}Add a new delivery address{% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="addr-form-divider"></div>
+
+                <!-- Form -->
+                <form method="POST" action="/user/save-address" class="addr-form" id="addressForm">
+                    <input type="hidden" name="source" value="{{ source }}">
+
+                    <div class="form-row-2">
+                        <div class="form-field">
+                            <label for="addrName" class="field-label">Full Name</label>
+                            <input
+                                type="text"
+                                id="addrName"
+                                name="name"
+                                class="field-input"
+                                placeholder="Enter your full name"
+                                value="{{ address.get('name', '') if address else '' }}"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="addrPhone" class="field-label">Mobile Number</label>
+                            <input
+                                type="text"
+                                id="addrPhone"
+                                name="phone"
+                                class="field-input"
+                                placeholder="10-digit mobile number"
+                                value="{{ address.get('phone', '') if address else '' }}"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="addrAddress" class="field-label">House / Flat / Building</label>
+                        <textarea
+                            id="addrAddress"
+                            name="address"
+                            class="field-input field-textarea"
+                            placeholder="House no., Flat, Building, Apartment name"
+                            required
+                        >{{ address.get('address', '') if address else '' }}</textarea>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-field">
+                            <label for="addrCity" class="field-label">City</label>
+                            <input
+                                type="text"
+                                id="addrCity"
+                                name="city"
+                                class="field-input"
+                                placeholder="City"
+                                value="{{ address.get('city', '') if address else '' }}"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="addrState" class="field-label">State</label>
+                            <input
+                                type="text"
+                                id="addrState"
+                                name="state"
+                                class="field-input"
+                                placeholder="State"
+                                value="{{ address.get('state', '') if address else '' }}"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="addrPincode" class="field-label">Pincode</label>
+                            <input
+                                type="text"
+                                id="addrPincode"
+                                name="pincode"
+                                class="field-input"
+                                placeholder="6-digit PIN"
+                                value="{{ address.get('pincode', '') if address else '' }}"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save-address">
+                            {% if address %}
+                                ✅ Update Address
+                            {% else %}
+                                💾 Save Address
+                            {% endif %}
+                        </button>
+                        {% if source == 'buy_now' %}
+                            <a href="/user/products" class="btn-back-link">← Back to Products</a>
+                        {% else %}
+                            <a href="/user/cart" class="btn-back-link">← Back to Cart</a>
+                        {% endif %}
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Info Panel -->
+        <div class="address-info-col">
+
+            {% if product %}
+            <div class="addr-context-card">
+                <h3 class="ctx-title">🛒 You're buying</h3>
+                <p class="ctx-product-name">{{ product.name }}</p>
+                <div class="ctx-divider"></div>
+                <div class="ctx-row">
+                    <span>Quantity</span>
+                    <strong>{{ product.quantity }}</strong>
+                </div>
+                <div class="ctx-row">
+                    <span>Price</span>
+                    <strong class="ctx-price">₹{{ product.price }}</strong>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="addr-info-card">
+                <h3 class="addr-info-title">📦 Why we need your address</h3>
+                <ul class="addr-info-list">
+                    <li>✅ Fast & accurate delivery</li>
+                    <li>✅ Confirm your shipping location</li>
+                    <li>✅ One-click checkout next time</li>
+                </ul>
+            </div>
+
+            <div class="addr-secure-note">
+                🔒 Your information is stored securely and never shared.
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+

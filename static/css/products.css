@@ -1,0 +1,773 @@
+/* =========================================================
+   SMARTCART - PRODUCTION E-COMMERCE PRODUCTS CATALOG
+   Flipkart / Amazon Style Fluid Responsive Architecture
+========================================================= */
+
+/* Prevent page horizontal overflow */
+.store-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 40px;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   STORE FILTER & SEARCH TOOLBAR
+========================================================= */
+.store-filter-bar {
+    background-color: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: clamp(14px, 2vw, 22px) clamp(14px, 2vw, 24px);
+    margin-bottom: clamp(14px, 2vw, 24px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.store-header-text {
+    flex: 1;
+    min-width: 220px;
+}
+
+.store-title {
+    font-size: clamp(1.15rem, 2.5vw, 1.55rem);
+    font-weight: 700;
+    color: var(--dark);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.store-subtitle {
+    font-size: clamp(0.78rem, 1.5vw, 0.88rem);
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.store-filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.store-search-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.search-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 260px;
+    max-width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px 0 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: #FAFAFA;
+    font-size: 0.88rem;
+    color: var(--text-main);
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: var(--white);
+    box-shadow: 0 0 0 3px rgba(40, 116, 240, 0.12);
+}
+
+.store-btn-filter {
+    height: 40px;
+    padding: 0 18px;
+    background-color: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+
+.store-btn-filter:hover {
+    background-color: var(--primary-hover);
+}
+
+.clear-search-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    height: 40px;
+    background-color: #f1f5f9;
+    color: #475569;
+    border-radius: var(--radius-md);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+
+.clear-search-btn:hover {
+    background-color: #e2e8f0;
+}
+
+.category-select {
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: #FAFAFA;
+    font-size: 0.88rem;
+    color: var(--text-main);
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.category-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* =========================================================
+   FLIPKART/AMAZON INSPIRED RESPONSIVE PRODUCT GRID
+========================================================= */
+
+/* Desktop & Laptop Default: Maximum 5 products per row */
+.product-grid,
+.product-container {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: clamp(12px, 1.6vw, 20px);
+    width: 100%;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+
+/* =========================================================
+   INDIVIDUAL PRODUCT CARD
+========================================================= */
+.product-card {
+    background-color: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: clamp(8px, 1.4vw, 16px);
+    width: 100%;
+    height: 100%;
+    min-width: 0; /* Prevents grid cell blowout on long text */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 22px rgba(23, 35, 55, 0.09);
+    border-color: #cbd5e1;
+}
+
+/* Card Top Strip (Category Tag) */
+.card-top-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: clamp(6px, 1vw, 10px);
+    min-height: 20px;
+    flex-shrink: 0;
+}
+
+.product-category-tag {
+    font-size: clamp(0.62rem, 1.2vw, 0.72rem);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    background-color: #f1f5f9;
+    padding: 2px 7px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: inline-block;
+}
+
+/* Responsive Image Frame (Locked Aspect Frame) */
+.product-img-wrapper {
+    width: 100%;
+    height: clamp(120px, 25vw, 195px);
+    min-height: clamp(120px, 25vw, 195px);
+    max-height: clamp(120px, 25vw, 195px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    margin-bottom: clamp(6px, 1vw, 12px);
+    background-color: #fafbfc;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+.product-card img,
+.product-img {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Preserves aspect ratio with zero distortion */
+    object-position: center;
+    display: block;
+    transition: transform 0.25s ease;
+}
+
+.product-card:hover .product-img {
+    transform: scale(1.05);
+}
+
+/* =========================================================
+   PRODUCT INFORMATION AREA
+========================================================= */
+.product-info {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+}
+
+/* Product Title - Clean 2-line clamp */
+.product-name {
+    font-size: clamp(0.78rem, 1.5vw, 0.95rem);
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0 0 4px 0;
+    line-height: 1.35;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.7em;
+    max-height: 2.7em;
+}
+
+.product-name a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.product-name a:hover {
+    color: var(--primary);
+}
+
+/* Product Description (Desktop only, hidden in compact mobile grid) */
+.product-description {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin: 0 0 6px 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.8em;
+    max-height: 2.8em;
+}
+
+/* Rating Badge Strip */
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.rating-badge {
+    background-color: #388e3c;
+    color: var(--white);
+    font-size: clamp(0.65rem, 1.2vw, 0.75rem);
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.2;
+}
+
+.rating-count {
+    font-size: clamp(0.66rem, 1.2vw, 0.75rem);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Price Strip - Bottom-aligned */
+.product-price-block {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: auto;
+    margin-bottom: clamp(6px, 1vw, 10px);
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.price-current {
+    font-size: clamp(0.98rem, 2vw, 1.25rem);
+    font-weight: 800;
+    color: var(--dark);
+    line-height: 1.1;
+}
+
+.free-delivery-badge {
+    font-size: clamp(0.62rem, 1vw, 0.72rem);
+    font-weight: 600;
+    color: #16a34a;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   ACTION BUTTONS & DETAILS LINK
+========================================================= */
+.product-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: auto;
+    margin-bottom: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+/* Full width when single button (e.g. Guest Buy Now) */
+.product-card-actions > *:only-child {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+.btn-cart-action,
+.btn-buy-action {
+    height: 36px;
+    border-radius: var(--radius-sm);
+    font-size: clamp(0.72rem, 1.2vw, 0.85rem);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    width: 100%;
+    white-space: nowrap;
+    padding: 0 4px;
+    user-select: none;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-cart-action {
+    background-color: #ff9f00; /* Flipkart Add to Cart */
+    color: #111827;
+}
+
+.btn-cart-action:hover {
+    background-color: #f59e0b;
+}
+
+.btn-buy-action {
+    background-color: #fb641b; /* Flipkart Buy Now */
+    color: var(--white);
+}
+
+.btn-buy-action:hover {
+    background-color: #ea580c;
+}
+
+.btn-cart-action:active,
+.btn-buy-action:active {
+    transform: scale(0.98);
+}
+
+.card-inspect-link {
+    text-align: center;
+    font-size: clamp(0.68rem, 1.2vw, 0.78rem);
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+    padding-top: 2px;
+    flex-shrink: 0;
+    display: block;
+    transition: color 0.15s ease;
+}
+
+.card-inspect-link:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* =========================================================
+   EMPTY STATE CONTAINER
+========================================================= */
+.empty-products-container {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    padding: 60px 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.empty-products-card {
+    background-color: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px 24px;
+    text-align: center;
+    max-width: 440px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: var(--shadow-sm);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.empty-products-card h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+
+.empty-products-card p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.btn-reset-filter {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: var(--primary);
+    color: var(--white);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.btn-reset-filter:hover {
+    background-color: var(--primary-hover);
+}
+
+/* =========================================================
+   TOAST NOTIFICATION
+========================================================= */
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background-color: #172337;
+    color: var(--white);
+    padding: 14px 22px;
+    border-radius: var(--radius-md);
+    font-size: 0.92rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    z-index: 2000;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-icon {
+    background-color: #16a34a;
+    color: var(--white);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+/* =========================================================
+   RESPONSIVE BREAKPOINTS (FLIPKART/AMAZON MOBILE-FIRST)
+========================================================= */
+
+/* Laptops (1024px - 1279px): 4 products per row */
+@media (max-width: 1279px) and (min-width: 1024px) {
+    .product-grid,
+    .product-container {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .product-img-wrapper {
+        height: 180px;
+        min-height: 180px;
+        max-height: 180px;
+    }
+}
+
+/* Tablets (768px - 1023px): 3 products per row */
+@media (max-width: 1023px) and (min-width: 768px) {
+    .store-filter-bar {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .product-grid,
+    .product-container {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .product-card {
+        padding: 12px;
+    }
+
+    .product-img-wrapper {
+        height: 165px;
+        min-height: 165px;
+        max-height: 165px;
+        padding: 6px;
+    }
+}
+
+/* =========================================================
+   MOBILE SCREENS (320px - 767px)
+   STRICTLY 2 PRODUCTS PER ROW (NO 1-COLUMN MONSTERS)
+========================================================= */
+@media (max-width: 767px) {
+    .store-container {
+        padding: 0 4px;
+        margin-bottom: 24px;
+    }
+
+    .store-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 10px;
+        margin-bottom: 12px;
+        gap: 10px;
+        border-radius: var(--radius-md);
+    }
+
+    .store-filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .store-search-form {
+        width: 100%;
+        display: flex;
+        gap: 6px;
+    }
+
+    .search-input-wrap {
+        width: 100%;
+        flex: 1;
+    }
+
+    .search-input {
+        height: 38px;
+        font-size: 0.84rem;
+        padding-left: 32px;
+    }
+
+    .store-btn-filter {
+        height: 38px;
+        padding: 0 14px;
+        font-size: 0.84rem;
+    }
+
+    .category-select {
+        width: 100%;
+        height: 38px;
+        font-size: 0.84rem;
+    }
+
+    /* Flipkart/Amazon 2-column mobile grid */
+    .product-grid,
+    .product-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+    }
+
+    .product-card {
+        padding: 8px !important;
+        border-radius: 8px !important;
+    }
+
+    .card-top-strip {
+        margin-bottom: 4px !important;
+        min-height: 16px !important;
+    }
+
+    .product-category-tag {
+        font-size: 0.6rem !important;
+        padding: 1px 4px !important;
+    }
+
+    .product-img-wrapper {
+        height: clamp(115px, 28vw, 155px) !important;
+        min-height: clamp(115px, 28vw, 155px) !important;
+        max-height: clamp(115px, 28vw, 155px) !important;
+        padding: 4px !important;
+        margin-bottom: 6px !important;
+    }
+
+    .product-name {
+        font-size: 0.78rem !important;
+        min-height: 2.7em !important;
+        max-height: 2.7em !important;
+        margin-bottom: 3px !important;
+        line-height: 1.35 !important;
+    }
+
+    /* In Flipkart/Amazon 2-col cards, description is suppressed to keep cards compact & equal */
+    .product-description {
+        display: none !important;
+    }
+
+    .product-rating {
+        gap: 4px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .rating-badge {
+        font-size: 0.66rem !important;
+        padding: 1px 4px !important;
+    }
+
+    .rating-count {
+        font-size: 0.66rem !important;
+    }
+
+    .product-price-block {
+        margin-bottom: 6px !important;
+        gap: 4px !important;
+    }
+
+    .price-current {
+        font-size: 1.02rem !important;
+    }
+
+    .free-delivery-badge {
+        font-size: 0.6rem !important;
+    }
+
+    .product-card-actions {
+        grid-template-columns: 1fr !important;
+        gap: 4px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .btn-cart-action,
+    .btn-buy-action {
+        height: 30px !important;
+        font-size: 0.72rem !important;
+        padding: 0 4px !important;
+        border-radius: 4px !important;
+    }
+
+    .card-inspect-link {
+        font-size: 0.66rem !important;
+        padding-top: 2px !important;
+    }
+}
+
+/* Ultra Small Phones (<= 340px) - Still 2 columns with ultra-tight spacing */
+@media (max-width: 340px) {
+    .product-grid,
+    .product-container {
+        gap: 5px !important;
+    }
+
+    .product-card {
+        padding: 5px !important;
+    }
+
+    .product-img-wrapper {
+        height: 105px !important;
+        min-height: 105px !important;
+        max-height: 105px !important;
+        padding: 2px !important;
+    }
+
+    .product-name {
+        font-size: 0.7rem !important;
+    }
+
+    .price-current {
+        font-size: 0.92rem !important;
+    }
+
+    .btn-cart-action,
+    .btn-buy-action {
+        height: 26px !important;
+        font-size: 0.66rem !important;
+    }
+}

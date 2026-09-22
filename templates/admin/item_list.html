@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}
+Manage Products - SmartCart Admin
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/item_list.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="inventory-container">
+
+    <!-- Header & Quick Actions -->
+    <div class="inventory-header">
+        <div>
+            <h1 class="inventory-title">Product Inventory</h1>
+            <p class="inventory-subtitle">View, search, update, and manage your e-commerce listings</p>
+        </div>
+        <a href="/admin/add-item" class="btn-add-product">
+            <span>➕</span>
+            <span>Add New Product</span>
+        </a>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="inventory-toolbar">
+
+        <!-- Search Form -->
+        <form method="GET" action="/admin/item-list" class="search-form">
+            <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input
+                    type="text"
+                    name="search"
+                    class="search-input"
+                    placeholder="Search product by title..."
+                    value="{{ request.args.get('search', '') }}"
+                >
+            </div>
+            <button type="submit" class="toolbar-btn">Search</button>
+            {% if request.args.get('search') %}
+                <a href="/admin/item-list" class="toolbar-btn-clear" title="Clear search">&times; Clear</a>
+            {% endif %}
+        </form>
+
+        <!-- Category Filter Form -->
+        <form method="GET" action="/admin/item-list" class="filter-form">
+            <select name="category" class="filter-select">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.category }}"
+                    {% if request.args.get('category') == cat.category %} selected {% endif %}>
+                    {{ cat.category }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="toolbar-btn">Filter</button>
+        </form>
+
+    </div>
+
+    <!-- Products Table Card -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th class="col-id">ID</th>
+                        <th class="col-img">Product</th>
+                        <th class="col-name">Name</th>
+                        <th class="col-cat">Category</th>
+                        <th class="col-price">Price</th>
+                        <th class="col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td class="col-id">
+                            <span class="id-tag">#{{ product.product_id }}</span>
+                        </td>
+                        <td class="col-img">
+                            <div class="product-thumb-container">
+                                <img
+                                    src="/static/uploads/product_images/{{ product.image }}"
+                                    alt="{{ product.name }}"
+                                    class="product-thumb"
+                                    onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><rect fill=%22%23eee%22 width=%2260%22 height=%2260%22/><text fill=%22%23999%22 x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22>No Img</text></svg>';"
+                                >
+                            </div>
+                        </td>
+                        <td class="col-name">
+                            <strong class="item-name">{{ product.name }}</strong>
+                        </td>
+                        <td class="col-cat">
+                            <span class="category-pill">{{ product.category }}</span>
+                        </td>
+                        <td class="col-price">
+                            <span class="price-value">₹{{ product.price }}</span>
+                        </td>
+                        <td class="col-actions">
+                            <div class="action-buttons">
+                                <a href="/admin/view-item/{{ product.product_id }}" class="action-btn btn-view" title="View details">
+                                    <span>👁️ View</span>
+                                </a>
+                                <a href="/admin/update-item/{{ product.product_id }}" class="action-btn btn-update" title="Edit product">
+                                    <span>✏️ Edit</span>
+                                </a>
+                                <a href="/admin/delete-item/{{ product.product_id }}"
+                                   class="action-btn btn-delete"
+                                   onclick="return confirm('Are you sure you want to delete this product?')"
+                                   title="Delete product">
+                                    <span>🗑️ Delete</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-table-cell">
+                            <div class="empty-state">
+                                <p class="empty-state-icon">📦</p>
+                                <h3>No Products Found</h3>
+                                <p class="empty-state-text">There are currently no products matching your search or filter criteria.</p>
+                                <a href="/admin/add-item" class="empty-state-btn">Add Your First Product</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

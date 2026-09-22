@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - SmartCart{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/my_orders.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="page-title">📦 My Orders</h2>
+    {% if orders|length == 0 %}
+    <div class="empty-orders-card">
+        <div class="empty-orders-icon">📦</div>
+        <h3>You have not placed any orders yet</h3>
+        <p>Explore our wide selection of quality products and place your first order today!</p>
+        <a href="/user/products" class="btn-start-shopping">Start Shopping &rarr;</a>
+    </div>
+    {% else %}
+    {% for order in orders %}
+    <div class="order-card">
+        <h3>Order #{{ order.order_id }}</h3>
+        <div class="order-info">
+            <p><strong>Amount:</strong> ₹{{ order.amount }}</p>
+            <p><strong>Status:</strong> {{ order.payment_status }}</p>
+            <p><strong>Date:</strong> {{ order.created_at }}</p>
+        </div>
+        <div class="order-actions">
+            <a href="/user/order-success/{{ order.order_id }}" class="view-btn">
+                <span>👁️ View Order Details</span>
+            </a>
+            <a href="/user/download-invoice/{{ order.order_id }}" class="view-btn btn-invoice">
+                <span>📥 Download Invoice</span>
+            </a>
+        </div>
+
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

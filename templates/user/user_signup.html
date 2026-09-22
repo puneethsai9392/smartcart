@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}
+Create an Account - SmartCart
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_signup.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="user-auth-wrapper">
+    <div class="user-auth-card">
+
+        <!-- Header -->
+        <div class="user-auth-header">
+            <div class="auth-icon-badge">
+                <span>✨</span>
+            </div>
+            <h1 class="user-auth-title">Create SmartCart Account</h1>
+            <p class="user-auth-subtitle">Join thousands of happy shoppers for exclusive deals and express delivery</p>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="/user-signup" class="user-auth-form">
+
+            <!-- Name -->
+            <div class="form-group">
+                <label for="name" class="form-label">Full Name</label>
+                <div class="input-container">
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="form-input"
+                        placeholder="e.g. John Doe"
+                        required
+                        autofocus
+                    >
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address</label>
+                <div class="input-container">
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="yourname@example.com"
+                        required
+                    >
+                </div>
+                <span class="field-hint">We'll email you a 6-digit OTP code to verify your account.</span>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-user-submit">
+                <span>Send Verification OTP</span>
+                <span class="btn-arrow">&rarr;</span>
+            </button>
+
+        </form>
+
+        <!-- Switch Link -->
+        <div class="user-auth-footer">
+            <p>Already have an account? <a href="/user/user-login" class="user-auth-link">Sign In</a></p>
+            <div class="trust-pill">
+                <span>🛡️ Safe & Secure Customer Registration</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
