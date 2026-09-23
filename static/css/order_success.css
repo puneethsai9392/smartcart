@@ -1,186 +1,259 @@
 /* =========================================================
-   ORDER SUCCESS PAGE CSS - SmartCart
+   ORDER SUCCESS PAGE CSS - SmartCart (Fully Responsive)
 ========================================================= */
 
 .order-success-page {
-    padding: 0.5rem 0 2rem;
     width: 100%;
-    max-width: 100%;
-    margin: 0;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 0.75rem 3rem;
     box-sizing: border-box;
 }
 
 .order-success-container {
     background: var(--white, #fff);
     border: 1px solid var(--border, #E5E7EB);
-    border-radius: var(--radius-lg, 12px);
-    padding: 2.5rem 40px;
-    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.08));
+    border-radius: var(--radius-lg, 14px);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     text-align: center;
     width: 100%;
     box-sizing: border-box;
 }
 
+/* Success Header */
 .success-header {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
 }
 
 .success-check {
-    font-size: 3rem;
+    font-size: clamp(2.5rem, 6vw, 3.5rem);
     margin-bottom: 0.5rem;
-    color: var(--success, #16A34A);
+    line-height: 1;
 }
 
 .success-title {
-    font-size: 1.75rem;
-    font-weight: 700;
+    font-size: clamp(1.4rem, 3.5vw, 1.9rem);
+    font-weight: 800;
     color: var(--text-main, #172337);
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
 }
 
 .success-subtitle {
-    font-size: 0.95rem;
+    font-size: clamp(0.9rem, 2.2vw, 1rem);
     color: var(--text-muted, #6B7280);
-    margin-bottom: 1.5rem;
+    margin: 0;
+    line-height: 1.5;
 }
 
+/* Detail Card */
 .order-detail-card {
-    background: var(--bg-body, #F5F7FA);
-    border-radius: var(--radius-md, 8px);
-    padding: 1.5rem;
+    background: var(--bg-body, #F8FAFC);
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: clamp(1.1rem, 2.5vw, 1.5rem);
     margin-bottom: 1.5rem;
     text-align: left;
+    box-sizing: border-box;
 }
 
 .card-heading {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: clamp(1rem, 2.2vw, 1.15rem);
+    font-weight: 700;
     color: var(--text-main, #172337);
-    margin-bottom: 1rem;
+    margin: 0 0 1rem 0;
     border-bottom: 1px solid var(--border, #E5E7EB);
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
+/* Detail Grid */
 .detail-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 .detail-item {
     display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-    color: var(--text-muted, #6B7280);
+    flex-direction: column;
+    gap: 0.25rem;
+    background: #ffffff;
+    border: 1px solid #EDF2F7;
+    border-radius: 8px;
+    padding: 0.75rem 0.9rem;
 }
 
 .detail-item .detail-label {
-    font-weight: 500;
-    color: var(--text-main, #172337);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted, #6B7280);
 }
 
 .detail-item .detail-value {
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-main, #172337);
+    word-break: break-word;
+}
+
+.order-id-highlight {
+    color: var(--primary, #2874F0);
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+}
+
+.payment-id-text {
+    font-size: 0.86rem !important;
+    word-break: break-all !important;
+    color: #475569 !important;
 }
 
 .amount-paid {
-    font-size: 1.2rem;
-    color: var(--primary, #2874F0);
-    font-weight: 700;
+    font-size: 1.25rem !important;
+    color: #16A34A !important;
+    font-weight: 800 !important;
 }
 
+/* Items Table */
 .items-table-wrapper {
+    width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    background: #ffffff;
 }
 
 .items-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 380px;
 }
 
 .items-table th,
 .items-table td {
-    border: 1px solid var(--border, #E5E7EB);
-    padding: 0.5rem 0.75rem;
+    padding: 0.75rem 0.85rem;
     text-align: left;
     font-size: 0.9rem;
+    border-bottom: 1px solid #EDF2F7;
 }
 
 .items-table th {
-    background: var(--primary-light, #eff6ff);
-    color: var(--primary, #2874F0);
-    font-weight: 600;
+    background: #F1F5F9;
+    color: #1E293B;
+    font-weight: 700;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
+.th-product { width: 50%; }
+.th-qty { width: 15%; text-align: center !important; }
+.th-price { width: 17%; text-align: right !important; }
+.th-total { width: 18%; text-align: right !important; }
+
+.td-qty { text-align: center !important; }
+.td-price { text-align: right !important; color: #475569; }
+.td-total { text-align: right !important; color: var(--primary, #2874F0); }
+
+/* Actions */
 .order-actions {
     display: flex;
-    flex-direction: row;
-    gap: 1rem;
+    flex-wrap: wrap;
+    gap: 0.85rem;
     align-items: center;
     justify-content: center;
-    margin-top: 1.5rem;
-    flex-wrap: wrap;
+    margin-top: 1.75rem;
 }
 
-.btn-primary-action {
+.btn-action {
+    flex: 1 1 200px;
+    min-height: 48px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1.6rem;
-    background: var(--primary, #2874F0);
-    color: var(--white, #fff);
-    border: 1.5px solid var(--primary, #2874F0);
-    border-radius: var(--radius-md, 8px);
-    font-weight: 600;
+    gap: 0.5rem;
+    padding: 0.75rem 1.4rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.92rem;
     text-decoration: none;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(40, 116, 240, 0.2);
+    box-sizing: border-box;
+    text-align: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-invoice-action {
+    background: #2563EB;
+    color: #ffffff;
+    border: 1.5px solid #2563EB;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.btn-invoice-action:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.btn-primary-action {
+    background: #ffffff;
+    color: var(--primary, #2874F0);
+    border: 1.5px solid var(--primary, #2874F0);
 }
 
 .btn-primary-action:hover {
-    background: var(--primary-hover, #185bcd);
-    border-color: var(--primary-hover, #185bcd);
-    box-shadow: 0 4px 10px rgba(24, 91, 205, 0.3);
+    background: var(--primary, #2874F0);
+    color: #ffffff;
     transform: translateY(-1px);
 }
 
 .btn-secondary-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem 1.6rem;
-    background: var(--primary-light, #eff6ff);
-    color: var(--primary, #2874F0);
-    border: 1.5px solid var(--primary, #2874F0);
-    border-radius: var(--radius-md, 8px);
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(40, 116, 240, 0.08);
+    background: #F8FAFC;
+    color: #334155;
+    border: 1.5px solid #CBD5E1;
 }
 
 .btn-secondary-action:hover {
-    background: var(--primary, #2874F0);
-    color: var(--white, #ffffff);
-    border-color: var(--primary, #2874F0);
-    box-shadow: 0 4px 10px rgba(40, 116, 240, 0.25);
+    background: #E2E8F0;
+    color: #0F172A;
     transform: translateY(-1px);
 }
 
-@media (max-width: 480px) {
+/* =========================================================
+   RESPONSIVE BREAKPOINTS (Tablets & Mobile)
+========================================================= */
+
+@media (max-width: 640px) {
+    .order-success-page {
+        padding: 1rem 0.5rem 2rem;
+    }
+
     .order-success-container {
         padding: 1.5rem 1rem;
     }
+
     .detail-grid {
         grid-template-columns: 1fr;
+        gap: 0.65rem;
     }
+
     .order-actions {
-        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.65rem;
     }
-    .btn-primary-action,
-    .btn-secondary-action {
+
+    .btn-action {
         width: 100%;
-        text-align: center;
+        flex: 1 1 100%;
     }
 }

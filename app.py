@@ -1808,7 +1808,7 @@ def selected_checkout():
 
     # Check login
     if 'user_id' not in session:
-        return redirect('/user/login')
+        return redirect('/user-login')
 
     # Get selected product IDs
     selected_ids = request.form.getlist('product_ids')
@@ -1942,6 +1942,7 @@ def user_pay():
     return render_template(
         "user/payment.html",
         amount=total_amount,
+        items=checkout_items,
         key_id=config.RAZORPAY_KEY_ID,
         order_id=razorpay_order['id'],
         address=address
@@ -2001,17 +2002,31 @@ def verify_payment():
 
     # Signature verified — now store order and items into DB
     user_id = session['user_id']
-    checkout_items = session.get('cart', {})
+    checkout_items = session.get('checkout_items')
+
+    # Fallback if checkout_items is not directly in session
+    if not checkout_items:
+        if session.get('checkout_type') == 'buy_now' and session.get('buy_now_product'):
+            b = session['buy_now_product']
+            checkout_items = {
+                str(b['product_id']): {
+                    'name': b['name'],
+                    'price': float(b['price']),
+                    'quantity': b['quantity']
+                }
+            }
+        else:
+            checkout_items = session.get('cart', {})
 
     if not checkout_items:
-        flash("Cart is empty. Cannot create order.", "danger")
+        flash("No products selected. Cannot create order.", "danger")
         return redirect('/user/products')
 
-    # Calculate total amount (ensure same as earlier)
+    # Calculate total amount (matches amount paid)
     total_amount = sum(
-    float(item['price']) * int(item['quantity'])
-    for item in checkout_items.values()
-)
+        float(item['price']) * int(item['quantity'])
+        for item in checkout_items.values()
+    )
 
     # DB insert: orders and order_items
     conn = get_db_connection()
@@ -2041,7 +2056,7 @@ def verify_payment():
 
         order_db_id = cursor.lastrowid  # newly created order's primary key
 
-        # Insert all items
+        # Insert ONLY the checkout items into order_items
         for pid_str, item in checkout_items.items():
             product_id = int(pid_str)
             cursor.execute("""
@@ -2052,15 +2067,20 @@ def verify_payment():
         # Commit transaction
         conn.commit()
 
-        # Clear cart and temporary razorpay order id
-        # Clear purchased data
+        # Remove only the purchased items from cart, leaving unselected items intact
+        cart = session.get('cart', {})
+        for pid_key in list(checkout_items.keys()):
+            cart.pop(str(pid_key), None)
+            if str(pid_key).isdigit():
+                cart.pop(int(pid_key), None)
+        session['cart'] = cart
+
+        # Clear checkout session flags
         session.pop('checkout_items', None)
         session.pop('buy_now_product', None)
         session.pop('razorpay_order_id', None)
-        # If purchase came from cart, clear cart
-        if session.get('checkout_type') == 'cart':
-            session.pop('cart', None)
-            session.pop('checkout_type', None)
+        session.pop('checkout_type', None)
+        session.modified = True
 
         flash("Payment successful and order placed!", "success")
         return redirect(f"/user/order-success/{order_db_id}")
@@ -2110,6 +2130,10 @@ def my_orders():
 
     cursor.execute("SELECT * FROM orders WHERE user_id=%s ORDER BY created_at DESC", (session['user_id'],))
     orders = cursor.fetchall()
+
+    for order in orders:
+        cursor.execute("SELECT * FROM order_items WHERE order_id=%s", (order['order_id'],))
+        order['order_items'] = cursor.fetchall()
 
     cursor.close()
     conn.close()

@@ -7,8 +7,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2 class="page-title">📦 My Orders</h2>
+<div class="orders-page-container">
+    <div class="orders-header">
+        <h1 class="page-title">📦 My Orders</h1>
+        <p class="page-subtitle">Track, review, and download invoices for all your purchases</p>
+    </div>
+
     {% if orders|length == 0 %}
     <div class="empty-orders-card">
         <div class="empty-orders-icon">📦</div>
@@ -17,25 +21,69 @@
         <a href="/user/products" class="btn-start-shopping">Start Shopping &rarr;</a>
     </div>
     {% else %}
-    {% for order in orders %}
-    <div class="order-card">
-        <h3>Order #{{ order.order_id }}</h3>
-        <div class="order-info">
-            <p><strong>Amount:</strong> ₹{{ order.amount }}</p>
-            <p><strong>Status:</strong> {{ order.payment_status }}</p>
-            <p><strong>Date:</strong> {{ order.created_at }}</p>
-        </div>
-        <div class="order-actions">
-            <a href="/user/order-success/{{ order.order_id }}" class="view-btn">
-                <span>👁️ View Order Details</span>
-            </a>
-            <a href="/user/download-invoice/{{ order.order_id }}" class="view-btn btn-invoice">
-                <span>📥 Download Invoice</span>
-            </a>
-        </div>
+    <div class="orders-list">
+        {% for order in orders %}
+        <div class="order-card">
+            
+            <!-- Card Header: Order ID + Status -->
+            <div class="order-card-header">
+                <div class="order-id-block">
+                    <span class="order-label">ORDER ID</span>
+                    <h3 class="order-number">#{{ order.order_id }}</h3>
+                </div>
+                <span class="order-badge status-{{ order.payment_status|lower }}">
+                    <span class="status-dot"></span>
+                    {{ order.payment_status|upper }}
+                </span>
+            </div>
 
+            <!-- Meta Details Grid -->
+            <div class="order-meta-grid">
+                <div class="order-meta-item">
+                    <span class="meta-label">Total Amount</span>
+                    <span class="meta-val meta-amount">₹{{ "%.2f"|format(order.amount|float) }}</span>
+                </div>
+                <div class="order-meta-item">
+                    <span class="meta-label">Order Date</span>
+                    <span class="meta-val">{{ order.created_at }}</span>
+                </div>
+                {% if order.shipping_city %}
+                <div class="order-meta-item">
+                    <span class="meta-label">Delivery Destination</span>
+                    <span class="meta-val">{{ order.shipping_city }}{% if order.shipping_state %}, {{ order.shipping_state }}{% endif %}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Ordered Products Preview -->
+            {% if order.order_items %}
+            <div class="order-items-preview">
+                <h4 class="order-items-heading">Ordered Products ({{ order.order_items|length }}):</h4>
+                <div class="order-items-tags">
+                    {% for it in order.order_items %}
+                    <span class="order-item-tag">
+                        🛍️ <strong class="item-name">{{ it.product_name }}</strong> 
+                        <span class="item-qty">&times; {{ it.quantity }}</span> 
+                        <span class="item-price">(₹{{ "%.2f"|format(it.price|float) }})</span>
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="order-actions">
+                <a href="/user/order-success/{{ order.order_id }}" class="view-btn btn-details">
+                    <span>👁️ View Order Details</span>
+                </a>
+                <a href="/user/download-invoice/{{ order.order_id }}" class="view-btn btn-invoice">
+                    <span>📥 Download Invoice</span>
+                </a>
+            </div>
+
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
     {% endif %}
 </div>
 {% endblock %}

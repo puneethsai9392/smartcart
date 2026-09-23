@@ -13,25 +13,25 @@
         <!-- Success Header -->
         <div class="success-header">
             <div class="success-check">🎉</div>
-            <h2 class="success-title">Your Order is Confirmed!</h2>
-            <p class="success-subtitle">Thank you for shopping with <strong>SmartCart</strong>.</p>
+            <h1 class="success-title">Your Order is Confirmed!</h1>
+            <p class="success-subtitle">Thank you for shopping with <strong>SmartCart</strong>. A confirmation has been sent to your account.</p>
         </div>
 
         <!-- Order Details Card -->
         <div class="order-detail-card">
-            <h3 class="card-heading">Order Details</h3>
+            <h3 class="card-heading">📋 Order Information</h3>
             <div class="detail-grid">
                 <div class="detail-item">
                     <span class="detail-label">Order ID</span>
-                    <span class="detail-value">{{ order.order_id }}</span>
+                    <span class="detail-value order-id-highlight">#{{ order.order_id }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Payment ID</span>
-                    <span class="detail-value">{{ order.razorpay_payment_id }}</span>
+                    <span class="detail-value payment-id-text">{{ order.razorpay_payment_id or 'N/A' }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Amount Paid</span>
-                    <span class="detail-value amount-paid">₹{{ order.amount }}</span>
+                    <span class="detail-value amount-paid">₹{{ "%.2f"|format(order.amount|float) }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Order Date</span>
@@ -42,22 +42,24 @@
 
         <!-- Order Items Card -->
         <div class="order-detail-card">
-            <h3 class="card-heading">Order Summary</h3>
+            <h3 class="card-heading">🛍️ Ordered Items ({{ items|length }})</h3>
             <div class="items-table-wrapper">
                 <table class="items-table">
                     <thead>
                         <tr>
-                            <th>Product</th>
-                            <th>Qty</th>
-                            <th>Price (₹)</th>
+                            <th class="th-product">Product</th>
+                            <th class="th-qty">Qty</th>
+                            <th class="th-price">Price</th>
+                            <th class="th-total">Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for it in items %}
                         <tr>
-                            <td>{{ it.product_name }}</td>
-                            <td>{{ it.quantity }}</td>
-                            <td>₹{{ it.price }}</td>
+                            <td class="td-product"><strong>{{ it.product_name }}</strong></td>
+                            <td class="td-qty">{{ it.quantity }}</td>
+                            <td class="td-price">₹{{ "%.2f"|format(it.price|float) }}</td>
+                            <td class="td-total"><strong>₹{{ "%.2f"|format((it.price|float) * (it.quantity|int)) }}</strong></td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -67,8 +69,15 @@
 
         <!-- Actions -->
         <div class="order-actions">
-            <a href="/user/products" class="btn-primary-action">Continue Shopping</a>
-            <a href="/user/my-orders" class="btn-secondary-action">View My Orders</a>
+            <a href="/user/download-invoice/{{ order.order_id }}" class="btn-action btn-invoice-action">
+                <span>📥 Download Invoice (PDF)</span>
+            </a>
+            <a href="/user/my-orders" class="btn-action btn-secondary-action">
+                <span>📦 View All Orders</span>
+            </a>
+            <a href="/user/products" class="btn-action btn-primary-action">
+                <span>🛒 Continue Shopping</span>
+            </a>
         </div>
 
     </div>

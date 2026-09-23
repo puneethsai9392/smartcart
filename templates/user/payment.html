@@ -31,9 +31,20 @@
             <!-- Order Summary -->
             <div class="payment-card">
                 <h3 class="card-heading">Order Summary</h3>
+                {% if items %}
+                <div class="payment-items-list">
+                    {% for pid, it in items.items() %}
+                    <div class="payment-item-row">
+                        <span class="payment-item-name">{{ it.name }} <span class="payment-item-qty">&times; {{ it.quantity }}</span></span>
+                        <span class="payment-item-price">₹{{ "%.2f"|format((it.price|float) * (it.quantity|int)) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="payment-summary-divider"></div>
+                {% endif %}
                 <div class="summary-row summary-total-row">
                     <span>Total Amount</span>
-                    <span class="total-amount">₹{{ amount }}</span>
+                    <span class="total-amount">₹{{ "%.2f"|format(amount|float) }}</span>
                 </div>
             </div>
 
@@ -61,10 +72,10 @@
             <div class="payment-card payment-action-card">
                 <h3 class="card-heading">Payment</h3>
                 <p class="pay-amount-label">Amount to Pay</p>
-                <p class="pay-amount-value">₹{{ amount }}</p>
+                <p class="pay-amount-value">₹{{ "%.2f"|format(amount|float) }}</p>
 
                 <button id="payButton" type="button" class="btn-pay">
-                    💳 Pay ₹{{ amount }}
+                    💳 Pay ₹{{ "%.2f"|format(amount|float) }}
                 </button>
 
                 <div class="secure-badge">
