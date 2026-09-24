@@ -145,7 +145,11 @@ Products Catalog - SmartCart
 <script>
     function addToCart(productId) {
         fetch(`/user/add-to-cart/${productId}`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         })
         .then(response => response.json())
         .then(data => {

@@ -121,7 +121,13 @@
 
 <script>
 function addToCartHome(productId) {
-    fetch(`/user/add-to-cart/${productId}`, { method: 'POST' })
+    fetch(`/user/add-to-cart/${productId}`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
     .then(r => r.json())
     .then(data => {
         var navCounter = document.getElementById('navCartCount');

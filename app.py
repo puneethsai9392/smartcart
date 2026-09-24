@@ -1692,7 +1692,7 @@ def user_product_details(product_id):
 # ADD TO CART
 # =========================================================
 
-@app.route('/user/add-to-cart/<int:pid>', methods=['POST'])
+@app.route('/user/add-to-cart/<int:pid>', methods=['GET', 'POST'])
 def add_to_cart(pid):
 
     # Check whether cart exists
@@ -1714,28 +1714,37 @@ def add_to_cart(pid):
     cursor.close()
     conn.close()
 
+    # Determine whether the client expects JSON or standard page redirect
+    accept_header = request.headers.get('Accept', '')
+    is_ajax = (
+        request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+        request.is_json or
+        request.args.get('format') == 'json' or
+        ('application/json' in accept_header and 'text/html' not in accept_header)
+    )
+
     # Product not found
     if not product:
-        return jsonify({
-            'success': False,
-            'message': 'Product not found!'
-        })
+        if is_ajax:
+            return jsonify({
+                'success': False,
+                'message': 'Product not found!'
+            }), 404
+        flash("Product not found!", "danger")
+        return redirect('/user/products')
 
     # Get cart
     cart = session['cart']
 
     # Session dictionary keys are strings
-    pid = str(pid)
+    pid_str = str(pid)
 
     # Product already exists
-    if pid in cart:
-
-        cart[pid]['quantity'] += 1
-
+    if pid_str in cart:
+        cart[pid_str]['quantity'] += 1
     # Product is new
     else:
-
-        cart[pid] = {
+        cart[pid_str] = {
             'name': product['name'],
             'price': float(product['price']),
             'image': product['image'],
@@ -1754,11 +1763,17 @@ def add_to_cart(pid):
         for item in cart.values()
     )
 
-    return jsonify({
-        'success': True,
-        'message': 'Product added to cart!',
-        'cart_count': cart_count
-    })
+    # If requested via AJAX/fetch, return JSON
+    if is_ajax:
+        return jsonify({
+            'success': True,
+            'message': 'Product added to cart!',
+            'cart_count': cart_count
+        })
+
+    # Standard browser submission/navigation: redirect directly to the cart page
+    flash(f"'{product['name']}' added to your cart!", "success")
+    return redirect('/user/cart')
 
 
 # =========================================================
