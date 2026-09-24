@@ -19,6 +19,7 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import config
+import resend
 
 import traceback
 import razorpay
@@ -55,180 +56,125 @@ def format_count(value):
 
 
 # =========================================================
-# EMAIL CONFIGURATION & DISPATCH
+# EMAIL CONFIGURATION & DISPATCH (RESEND HTTPS API)
 # =========================================================
 
 app.config['ADMIN_UPLOAD_FOLDER'] = config.ADMIN_UPLOAD_FOLDER
 
 
-def send_email_via_smtp(recipient, subject, text_body, html_body=None, timeout=8.0):
+def mask_email(email_str):
     """
-    Sends an email using standard Python smtplib with STARTTLS on port 587.
-    Logs diagnostics safely without exposing passwords, OTPs, or API secrets.
-    Distinguishes connection timeout, DNS failure, auth failure, TLS error, etc.
+    Safely masks an email address for Render diagnostic logs.
+    E.g., puneethsai2398@gmail.com -> p***8@gmail.com.
+    Never exposes full personal email address in public/Render logs.
     """
-    server = config.MAIL_SERVER or "smtp.gmail.com"
-    port = int(config.MAIL_PORT or 587)
-    username = config.MAIL_USERNAME
-    password = config.MAIL_PASSWORD
-    use_tls = config.MAIL_USE_TLS
-
-    # Safe diagnostic logs (NO credentials printed!)
-    print(f"[SMTP CONFIG] SMTP server: {server}:{port}")
-    print(f"[SMTP CONFIG] SMTP username configured: {bool(username)}")
-    print(f"[SMTP CONFIG] SMTP password configured: {bool(password)}")
-    print(f"[SMTP CONFIG] SMTP use_tls: {use_tls}")
-
-    if not username or not password:
-        print("[SMTP ERROR] Missing MAIL_USERNAME or MAIL_PASSWORD in environment.")
-        return False, "missing_credentials"
-
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = f"SmartCart <{username}>"
-    msg['To'] = recipient
-
-    part1 = MIMEText(text_body, 'plain', 'utf-8')
-    msg.attach(part1)
-    if html_body:
-        part2 = MIMEText(html_body, 'html', 'utf-8')
-        msg.attach(part2)
-
-    smtp_conn = None
+    if not email_str or not isinstance(email_str, str) or "@" not in email_str:
+        return "[hidden-email]"
     try:
-        print(f"[SMTP ATTEMPT] Connecting to {server}:{port} (timeout={timeout}s)...")
-        smtp_conn = smtplib.SMTP(server, port, timeout=timeout)
-        smtp_conn.ehlo()
-
-        if use_tls:
-            context = ssl.create_default_context()
-            smtp_conn.starttls(context=context)
-            smtp_conn.ehlo()
-
-        print("[SMTP ATTEMPT] Authenticating with SMTP server...")
-        smtp_conn.login(username, password)
-
-        print("[SMTP ATTEMPT] Sending message to recipient...")
-        smtp_conn.sendmail(username, [recipient], msg.as_string())
-        print("[SMTP SUCCESS] Email delivered successfully via Gmail SMTP.")
-        return True, None
-
-    except smtplib.SMTPAuthenticationError as e:
-        print("[SMTP ERROR - AUTHENTICATION FAILURE] SMTP authentication failed:", repr(e))
-        print("  -> Hint: Verify MAIL_USERNAME is correct and MAIL_PASSWORD is a valid 16-character Google App Password (not your personal Google account password).")
-        print("OTP email failed:", repr(e))
-        return False, "authentication_failure"
-
-    except (socket.timeout, TimeoutError) as e:
-        print(f"[SMTP ERROR - CONNECTION TIMEOUT] SMTP connection timed out connecting to {server}:{port}:", repr(e))
-        print("  -> Hint: Outbound SMTP port 587 is likely blocked by cloud host.")
-        print("OTP email failed:", repr(e))
-        return False, "connection_timeout"
-
-    except socket.gaierror as e:
-        print(f"[SMTP ERROR - DNS FAILURE] Could not resolve SMTP server '{server}':", repr(e))
-        print("OTP email failed:", repr(e))
-        return False, "dns_failure"
-
-    except (ssl.SSLError, ssl.CertificateError) as e:
-        print("[SMTP ERROR - TLS FAILURE] SSL/TLS handshake failed:", repr(e))
-        print("OTP email failed:", repr(e))
-        return False, "tls_failure"
-
-    except smtplib.SMTPRecipientsRefused as e:
-        print("[SMTP ERROR - RECIPIENT REJECTED] SMTP recipient rejected:", repr(e))
-        print("OTP email failed:", repr(e))
-        return False, "recipient_rejected"
-
-    except smtplib.SMTPServerDisconnected as e:
-        print("[SMTP ERROR - SERVER DISCONNECTED] SMTP server disconnected unexpectedly:", repr(e))
-        print("OTP email failed:", repr(e))
-        return False, "server_disconnected"
-
-    except Exception as e:
-        print("OTP email failed:", repr(e))
-        return False, str(e)
-
-    finally:
-        if smtp_conn:
-            try:
-                smtp_conn.quit()
-            except Exception:
-                pass
+        user_part, domain = email_str.strip().split("@", 1)
+        if len(user_part) <= 2:
+            masked_user = user_part[0] + "*"
+        else:
+            masked_user = user_part[0] + "***" + user_part[-1]
+        return f"{masked_user}@{domain}"
+    except Exception:
+        return "[hidden-email]"
 
 
 def send_email_via_resend(recipient, subject, text_body, html_body=None):
     """
     Sends email via Resend HTTPS REST API (port 443).
-    Preferred production fallback for cloud hosts that block outbound SMTP ports.
+    Safe for cloud environments like Render that block outbound SMTP (ports 25, 465, 587).
+    Never prints API keys, full recipient emails, or plaintext OTPs in logs.
+    Returns: (success: bool, error_message: str | None)
     """
-    api_key = config.RESEND_API_KEY or os.environ.get("RESEND_API_KEY")
+    api_key = os.getenv("RESEND_API_KEY") or getattr(config, 'RESEND_API_KEY', None)
     if not api_key:
-        return False
+        print("[RESEND ERROR] RESEND_API_KEY is not configured in environment variables.")
+        return False, "RESEND_API_KEY is not configured on server."
 
+    api_key = str(api_key).strip()
+    sender = os.getenv("RESEND_FROM") or getattr(config, 'RESEND_FROM', None) or "SmartCart <onboarding@resend.dev>"
+    sender = str(sender).strip()
+
+    safe_target = mask_email(recipient)
+    print(f"[RESEND] Sending email via HTTPS API to recipient: {safe_target}")
+    key_prefix = api_key[:6] if len(api_key) >= 6 else "re_..."
+    print(f"[RESEND CONFIG] Sender: {sender} | API key configured: True (starts with: {key_prefix}...)")
+
+    # Primary method: Official resend Python SDK
     try:
-        sender = config.RESEND_FROM or os.environ.get("RESEND_FROM", "SmartCart <onboarding@resend.dev>")
-        payload = {
+        resend.api_key = api_key
+        params = {
             "from": sender,
-            "to": [recipient],
+            "to": [recipient.strip()],
             "subject": subject,
             "text": text_body
         }
         if html_body:
-            payload["html"] = html_body
+            params["html"] = html_body
 
-        data = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(
-            "https://api.resend.com/emails",
-            data=data,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "User-Agent": "SmartCart/1.0"
-            },
-            method="POST"
-        )
-        print("[RESEND ATTEMPT] Sending email via Resend HTTPS API...")
-        with urllib.request.urlopen(req, timeout=8.0) as resp:
-            if resp.status in (200, 201):
-                print("[RESEND SUCCESS] Email delivered successfully via Resend HTTPS API.")
-                return True
-            print(f"[RESEND ERROR] HTTP status code: {resp.status}")
-            return False
-    except urllib.error.HTTPError as e:
-        err_msg = e.read().decode('utf-8', errors='ignore')
-        print(f"[RESEND HTTP ERROR] HTTP {e.code}: {err_msg}")
-        return False
+        resp = resend.Emails.send(params)
+        email_id = resp.get("id") if isinstance(resp, dict) else getattr(resp, "id", "sent")
+        print(f"[RESEND SUCCESS] Email delivered via Resend SDK! Message ID: {email_id}")
+        return True, None
+
+    except resend.exceptions.ResendError as e:
+        err_msg = str(e)
+        print(f"[RESEND API ERROR] ResendError: {err_msg}")
+        if "only send testing emails" in err_msg.lower():
+            print("  -> HINT: Using onboarding@resend.dev allows sending only to your registered Resend account email.")
+            print("  -> To send to any customer email address, verify your domain at https://resend.com/domains.")
+        return False, err_msg
+
     except Exception as e:
-        print("Resend email failed:", repr(e))
-        return False
+        print(f"[RESEND SDK EXCEPTION] {type(e).__name__}: {e}. Trying direct HTTPS fallback...")
+        # Secondary fallback: Direct HTTPS Request via urllib (REST API port 443)
+        try:
+            payload = {
+                "from": sender,
+                "to": [recipient.strip()],
+                "subject": subject,
+                "text": text_body
+            }
+            if html_body:
+                payload["html"] = html_body
 
+            data = json.dumps(payload).encode('utf-8')
+            req = urllib.request.Request(
+                "https://api.resend.com/emails",
+                data=data,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "User-Agent": "SmartCart/1.0"
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=10.0) as http_resp:
+                if http_resp.status in (200, 201):
+                    print("[RESEND SUCCESS] Email delivered successfully via HTTPS REST fallback.")
+                    return True, None
+                print(f"[RESEND ERROR] HTTP status code: {http_resp.status}")
+                return False, f"Resend returned HTTP status {http_resp.status}"
 
-def send_email_robust(recipient, subject, text_body, html_body=None):
-    """
-    Production-safe email dispatcher:
-    1. First attempts Gmail SMTP via standard smtplib with full diagnostics.
-    2. If SMTP fails (e.g. connection timeout on Render) and RESEND_API_KEY is configured,
-       falls back to Resend HTTPS REST API.
-    """
-    # 1. Try Gmail SMTP if credentials configured
-    if config.MAIL_USERNAME and config.MAIL_PASSWORD:
-        sent, err = send_email_via_smtp(recipient, subject, text_body, html_body, timeout=8.0)
-        if sent:
-            return True
-
-    # 2. Fallback to Resend HTTPS API if configured
-    if config.RESEND_API_KEY or os.environ.get("RESEND_API_KEY"):
-        print("[EMAIL FALLBACK] Falling back to Resend HTTPS API...")
-        if send_email_via_resend(recipient, subject, text_body, html_body):
-            return True
-
-    return False
+        except urllib.error.HTTPError as he:
+            try:
+                err_detail = he.read().decode('utf-8', errors='ignore')
+            except Exception:
+                err_detail = str(he)
+            print(f"[RESEND HTTP ERROR] HTTP {he.code}: {err_detail}")
+            return False, f"Resend HTTP {he.code}: {err_detail}"
+        except Exception as fallback_e:
+            print(f"[RESEND FALLBACK ERROR] {type(fallback_e).__name__}: {fallback_e}")
+            return False, str(fallback_e)
 
 
 def send_otp_email(recipient_email, otp, recipient_type="Customer"):
     """
-    Sends a styled OTP email for password reset.
+    Sends a styled OTP email for password reset via the Resend HTTPS API (port 443).
+    Does NOT use SMTP (prevents OSError 101: Network is unreachable on Render).
+    Returns: (success: bool, error_message: str | None)
     """
     subject = f"SmartCart {recipient_type} - Password Reset OTP"
     body = (
@@ -253,7 +199,70 @@ def send_otp_email(recipient_email, otp, recipient_type="Customer"):
         <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">&copy; SmartCart. All rights reserved.</p>
     </div>
     """
-    return send_email_robust(recipient_email, subject, body, html)
+    return send_email_via_resend(recipient_email, subject, body, html)
+
+
+def send_email_via_smtp(recipient, subject, text_body, html_body=None, timeout=8.0):
+    """
+    Legacy SMTP fallback kept for local development if Resend is not configured.
+    """
+    server = getattr(config, 'MAIL_SERVER', 'smtp.gmail.com')
+    port = int(getattr(config, 'MAIL_PORT', 587))
+    username = getattr(config, 'MAIL_USERNAME', None)
+    password = getattr(config, 'MAIL_PASSWORD', None)
+    use_tls = getattr(config, 'MAIL_USE_TLS', True)
+
+    if not username or not password:
+        return False, "missing_credentials"
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = f"SmartCart <{username}>"
+    msg['To'] = recipient
+
+    msg.attach(MIMEText(text_body, 'plain', 'utf-8'))
+    if html_body:
+        msg.attach(MIMEText(html_body, 'html', 'utf-8'))
+
+    smtp_conn = None
+    try:
+        smtp_conn = smtplib.SMTP(server, port, timeout=timeout)
+        smtp_conn.ehlo()
+        if use_tls:
+            context = ssl.create_default_context()
+            smtp_conn.starttls(context=context)
+            smtp_conn.ehlo()
+        smtp_conn.login(username, password)
+        smtp_conn.sendmail(username, [recipient], msg.as_string())
+        return True, None
+    except Exception as e:
+        print("[SMTP NOTICE] SMTP email attempt failed:", repr(e))
+        return False, str(e)
+    finally:
+        if smtp_conn:
+            try:
+                smtp_conn.quit()
+            except Exception:
+                pass
+
+
+def send_email_robust(recipient, subject, text_body, html_body=None):
+    """
+    Production-safe email dispatcher:
+    1. First uses Resend HTTPS API if RESEND_API_KEY is configured (recommended for Render).
+    2. Falls back to SMTP only if Resend is not configured and SMTP credentials exist.
+    """
+    if os.getenv("RESEND_API_KEY") or getattr(config, 'RESEND_API_KEY', None):
+        success, _ = send_email_via_resend(recipient, subject, text_body, html_body)
+        if success:
+            return True
+
+    # Legacy fallback only if Resend is absent
+    if getattr(config, 'MAIL_USERNAME', None) and getattr(config, 'MAIL_PASSWORD', None):
+        sent, _ = send_email_via_smtp(recipient, subject, text_body, html_body, timeout=8.0)
+        return sent
+
+    return False
 
 
 
@@ -576,34 +585,47 @@ def admin_forgot_password():
     if request.method == 'GET':
         return render_template('admin/forgot_password.html')
 
-    email = request.form.get('email', '').strip()
-    if not email:
-        flash("Please enter your registered admin email.", "danger")
+    try:
+        email = request.form.get('email', '').strip().lower()
+        if not email:
+            flash("Please enter your registered admin email.", "danger")
+            return redirect('/admin/forgot-password')
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT admin_id, name, email FROM admin WHERE LOWER(email)=%s", (email,))
+        admin = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not admin:
+            flash("No admin account found with this email address.", "danger")
+            return redirect('/admin/forgot-password')
+
+        otp = str(secrets.randbelow(1000000)).zfill(6)
+        session['admin_reset_otp'] = otp
+        session['admin_reset_email'] = email
+        session['admin_reset_otp_expiry'] = time.time() + 600
+
+        email_sent, err_msg = send_otp_email(email, otp, "Admin")
+        if not email_sent:
+            print(f"[ADMIN FORGOT PASSWORD ERROR] Failed to send OTP to {mask_email(email)}: {err_msg}")
+            if err_msg and "only send testing emails" in str(err_msg).lower():
+                flash("Resend is in test mode: OTP can only be sent to your registered Resend account email.", "warning")
+            elif err_msg and "resend_api_key is not configured" in str(err_msg).lower():
+                flash("Email service is unconfigured. Please set RESEND_API_KEY in Render settings.", "danger")
+            else:
+                flash("Unable to send OTP right now. Please try again later.", "danger")
+            return redirect('/admin/forgot-password')
+        else:
+            flash("OTP sent successfully. Please check your email inbox or spam folder.", "success")
+            return redirect('/admin/reset-password')
+
+    except Exception as e:
+        print(f"[ADMIN FORGOT PASSWORD EXCEPTION] {type(e).__name__}: {e}")
+        traceback.print_exc()
+        flash("An error occurred while processing your request. Please try again.", "danger")
         return redirect('/admin/forgot-password')
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT admin_id, name, email FROM admin WHERE email=%s", (email,))
-    admin = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if not admin:
-        flash("No admin account found with this email address.", "danger")
-        return redirect('/admin/forgot-password')
-
-    otp = str(secrets.randbelow(1000000)).zfill(6)
-    session['admin_reset_otp'] = otp
-    session['admin_reset_email'] = email
-    session['admin_reset_otp_expiry'] = time.time() + 600
-
-    email_sent = send_otp_email(email, otp, "Admin")
-    if not email_sent:
-        flash("Unable to send OTP right now. Please try again later.", "danger")
-        return redirect('/admin/forgot-password')
-    else:
-        flash("OTP sent successfully. Please check your email or spam folder.", "success")
-        return redirect('/admin/reset-password')
 
 
 # =================================================================
@@ -611,21 +633,29 @@ def admin_forgot_password():
 # =================================================================
 @app.route('/admin/forgot-password/resend', methods=['GET', 'POST'])
 def admin_resend_otp():
-    email = session.get('admin_reset_email')
-    if not email:
-        flash("Reset session expired. Please enter your email again.", "warning")
-        return redirect('/admin/forgot-password')
+    try:
+        email = session.get('admin_reset_email')
+        if not email:
+            flash("Reset session expired. Please enter your email again.", "warning")
+            return redirect('/admin/forgot-password')
 
-    otp = str(secrets.randbelow(1000000)).zfill(6)
-    session['admin_reset_otp'] = otp
-    session['admin_reset_otp_expiry'] = time.time() + 600
+        otp = str(secrets.randbelow(1000000)).zfill(6)
+        session['admin_reset_otp'] = otp
+        session['admin_reset_otp_expiry'] = time.time() + 600
 
-    email_sent = send_otp_email(email, otp, "Admin")
-    if not email_sent:
-        flash("Unable to send OTP right now. Please try again later.", "danger")
-        return redirect('/admin/reset-password')
-    else:
-        flash("OTP sent successfully. Please check your email or spam folder.", "success")
+        email_sent, err_msg = send_otp_email(email, otp, "Admin")
+        if not email_sent:
+            print(f"[ADMIN RESEND OTP ERROR] Failed to resend OTP to {mask_email(email)}: {err_msg}")
+            flash("Unable to send OTP right now. Please try again later.", "danger")
+            return redirect('/admin/reset-password')
+        else:
+            flash("OTP sent successfully. Please check your email inbox or spam folder.", "success")
+            return redirect('/admin/reset-password')
+
+    except Exception as e:
+        print(f"[ADMIN RESEND OTP EXCEPTION] {type(e).__name__}: {e}")
+        traceback.print_exc()
+        flash("An unexpected error occurred while resending the OTP.", "danger")
         return redirect('/admin/reset-password')
 
 
@@ -642,46 +672,53 @@ def admin_reset_password():
     if request.method == 'GET':
         return render_template('admin/reset_password.html', email=email)
 
-    otp = request.form.get('otp', '').strip()
-    new_password = request.form.get('password', '')
-    confirm_password = request.form.get('confirm_password', '')
+    try:
+        otp = request.form.get('otp', '').strip()
+        new_password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
 
-    stored_otp = str(session.get('admin_reset_otp', ''))
-    expiry = session.get('admin_reset_otp_expiry', 0)
+        stored_otp = str(session.get('admin_reset_otp', ''))
+        expiry = session.get('admin_reset_otp_expiry', 0)
 
-    if not stored_otp or time.time() > expiry:
+        if not stored_otp or time.time() > expiry:
+            session.pop('admin_reset_otp', None)
+            session.pop('admin_reset_otp_expiry', None)
+            flash("OTP code has expired. Please request a new code.", "danger")
+            return redirect('/admin/forgot-password')
+
+        if not otp or otp != stored_otp:
+            flash("Invalid OTP code. Please enter the correct code.", "danger")
+            return redirect('/admin/reset-password')
+
+        if len(new_password) < 6:
+            flash("Password must be at least 6 characters long.", "danger")
+            return redirect('/admin/reset-password')
+
+        if new_password != confirm_password:
+            flash("Passwords do not match. Please re-enter.", "danger")
+            return redirect('/admin/reset-password')
+
+        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE admin SET password=%s WHERE LOWER(email)=%s", (hashed_password, email.lower()))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
         session.pop('admin_reset_otp', None)
+        session.pop('admin_reset_email', None)
         session.pop('admin_reset_otp_expiry', None)
-        flash("OTP code has expired. Please request a new code.", "danger")
-        return redirect('/admin/forgot-password')
 
-    if not otp or otp != stored_otp:
-        flash("Invalid OTP code. Please enter the correct code.", "danger")
+        flash("Admin password has been reset successfully! Please sign in with your new password.", "success")
+        return redirect('/admin-login')
+
+    except Exception as e:
+        print(f"[ADMIN RESET PASSWORD EXCEPTION] {type(e).__name__}: {e}")
+        traceback.print_exc()
+        flash("An error occurred while resetting your password. Please try again.", "danger")
         return redirect('/admin/reset-password')
-
-    if len(new_password) < 6:
-        flash("Password must be at least 6 characters long.", "danger")
-        return redirect('/admin/reset-password')
-
-    if new_password != confirm_password:
-        flash("Passwords do not match. Please re-enter.", "danger")
-        return redirect('/admin/reset-password')
-
-    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE admin SET password=%s WHERE email=%s", (hashed_password, email))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    session.pop('admin_reset_otp', None)
-    session.pop('admin_reset_email', None)
-    session.pop('admin_reset_otp_expiry', None)
-
-    flash("Admin password has been reset successfully! Please sign in with your new password.", "success")
-    return redirect('/admin-login')
 
 
 # =================================================================
@@ -1395,34 +1432,47 @@ def user_forgot_password():
     if request.method == 'GET':
         return render_template('user/forgot_password.html')
 
-    email = request.form.get('email', '').strip()
-    if not email:
-        flash("Please enter your registered email address.", "danger")
+    try:
+        email = request.form.get('email', '').strip().lower()
+        if not email:
+            flash("Please enter your registered email address.", "danger")
+            return redirect('/user/forgot-password')
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT user_id, name, email FROM users WHERE LOWER(email)=%s", (email,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not user:
+            flash("No account found with this email address.", "danger")
+            return redirect('/user/forgot-password')
+
+        otp = str(secrets.randbelow(1000000)).zfill(6)
+        session['user_reset_otp'] = otp
+        session['user_reset_email'] = email
+        session['user_reset_otp_expiry'] = time.time() + 600  # 10 minutes expiry
+
+        email_sent, err_msg = send_otp_email(email, otp, "Customer")
+        if not email_sent:
+            print(f"[USER FORGOT PASSWORD ERROR] Failed to send OTP to {mask_email(email)}: {err_msg}")
+            if err_msg and "only send testing emails" in str(err_msg).lower():
+                flash("Resend is in test mode: OTP can only be sent to your registered Resend account email.", "warning")
+            elif err_msg and "resend_api_key is not configured" in str(err_msg).lower():
+                flash("Email service is unconfigured. Please set RESEND_API_KEY in Render settings.", "danger")
+            else:
+                flash("Unable to send OTP right now. Please try again later.", "danger")
+            return redirect('/user/forgot-password')
+        else:
+            flash("OTP sent successfully. Please check your email inbox or spam folder.", "success")
+            return redirect('/user/reset-password')
+
+    except Exception as e:
+        print(f"[USER FORGOT PASSWORD EXCEPTION] {type(e).__name__}: {e}")
+        traceback.print_exc()
+        flash("An error occurred while processing your request. Please try again.", "danger")
         return redirect('/user/forgot-password')
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT user_id, name, email FROM users WHERE email=%s", (email,))
-    user = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if not user:
-        flash("No account found with this email address.", "danger")
-        return redirect('/user/forgot-password')
-
-    otp = str(secrets.randbelow(1000000)).zfill(6)
-    session['user_reset_otp'] = otp
-    session['user_reset_email'] = email
-    session['user_reset_otp_expiry'] = time.time() + 600
-
-    email_sent = send_otp_email(email, otp, "Customer")
-    if not email_sent:
-        flash("Unable to send OTP right now. Please try again later.", "danger")
-        return redirect('/user/forgot-password')
-    else:
-        flash("OTP sent successfully. Please check your email or spam folder.", "success")
-        return redirect('/user/reset-password')
 
 
 # =========================================================
@@ -1430,21 +1480,29 @@ def user_forgot_password():
 # =========================================================
 @app.route('/user/forgot-password/resend', methods=['GET', 'POST'])
 def user_resend_otp():
-    email = session.get('user_reset_email')
-    if not email:
-        flash("Reset session expired. Please enter your email again.", "warning")
-        return redirect('/user/forgot-password')
+    try:
+        email = session.get('user_reset_email')
+        if not email:
+            flash("Reset session expired. Please enter your email again.", "warning")
+            return redirect('/user/forgot-password')
 
-    otp = str(secrets.randbelow(1000000)).zfill(6)
-    session['user_reset_otp'] = otp
-    session['user_reset_otp_expiry'] = time.time() + 600
+        otp = str(secrets.randbelow(1000000)).zfill(6)
+        session['user_reset_otp'] = otp
+        session['user_reset_otp_expiry'] = time.time() + 600
 
-    email_sent = send_otp_email(email, otp, "Customer")
-    if not email_sent:
-        flash("Unable to send OTP right now. Please try again later.", "danger")
-        return redirect('/user/reset-password')
-    else:
-        flash("OTP sent successfully. Please check your email or spam folder.", "success")
+        email_sent, err_msg = send_otp_email(email, otp, "Customer")
+        if not email_sent:
+            print(f"[USER RESEND OTP ERROR] Failed to resend OTP to {mask_email(email)}: {err_msg}")
+            flash("Unable to resend OTP right now. Please try again later.", "danger")
+            return redirect('/user/reset-password')
+        else:
+            flash("A new OTP has been sent successfully. Please check your email.", "success")
+            return redirect('/user/reset-password')
+
+    except Exception as e:
+        print(f"[USER RESEND OTP EXCEPTION] {type(e).__name__}: {e}")
+        traceback.print_exc()
+        flash("An unexpected error occurred while resending the OTP.", "danger")
         return redirect('/user/reset-password')
 
 
@@ -1461,46 +1519,53 @@ def user_reset_password():
     if request.method == 'GET':
         return render_template('user/reset_password.html', email=email)
 
-    otp = request.form.get('otp', '').strip()
-    new_password = request.form.get('password', '')
-    confirm_password = request.form.get('confirm_password', '')
+    try:
+        otp = request.form.get('otp', '').strip()
+        new_password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
 
-    stored_otp = str(session.get('user_reset_otp', ''))
-    expiry = session.get('user_reset_otp_expiry', 0)
+        stored_otp = str(session.get('user_reset_otp', ''))
+        expiry = session.get('user_reset_otp_expiry', 0)
 
-    if not stored_otp or time.time() > expiry:
+        if not stored_otp or time.time() > expiry:
+            session.pop('user_reset_otp', None)
+            session.pop('user_reset_otp_expiry', None)
+            flash("OTP code has expired. Please request a new code.", "danger")
+            return redirect('/user/forgot-password')
+
+        if not otp or otp != stored_otp:
+            flash("Invalid OTP code. Please enter the correct code.", "danger")
+            return redirect('/user/reset-password')
+
+        if len(new_password) < 6:
+            flash("Password must be at least 6 characters long.", "danger")
+            return redirect('/user/reset-password')
+
+        if new_password != confirm_password:
+            flash("Passwords do not match. Please re-enter.", "danger")
+            return redirect('/user/reset-password')
+
+        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET password=%s WHERE LOWER(email)=%s", (hashed_password, email.lower()))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
         session.pop('user_reset_otp', None)
+        session.pop('user_reset_email', None)
         session.pop('user_reset_otp_expiry', None)
-        flash("OTP code has expired. Please request a new code.", "danger")
-        return redirect('/user/forgot-password')
 
-    if not otp or otp != stored_otp:
-        flash("Invalid OTP code. Please enter the correct code.", "danger")
+        flash("Password reset successfully! Please sign in with your new password.", "success")
+        return redirect('/user/user-login')
+
+    except Exception as e:
+        print(f"[USER RESET PASSWORD EXCEPTION] {type(e).__name__}: {e}")
+        traceback.print_exc()
+        flash("An error occurred while resetting your password. Please try again.", "danger")
         return redirect('/user/reset-password')
-
-    if len(new_password) < 6:
-        flash("Password must be at least 6 characters long.", "danger")
-        return redirect('/user/reset-password')
-
-    if new_password != confirm_password:
-        flash("Passwords do not match. Please re-enter.", "danger")
-        return redirect('/user/reset-password')
-
-    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET password=%s WHERE email=%s", (hashed_password, email))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    session.pop('user_reset_otp', None)
-    session.pop('user_reset_email', None)
-    session.pop('user_reset_otp_expiry', None)
-
-    flash("Password reset successfully! Please sign in with your new password.", "success")
-    return redirect('/user/user-login')
 
 
 # =========================================================

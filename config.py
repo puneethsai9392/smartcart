@@ -24,8 +24,8 @@ if MAIL_PASSWORD:
     MAIL_PASSWORD = MAIL_PASSWORD.replace(" ", "").strip()
 
 # Resend HTTPS Email API (Preferred for cloud hosts blocking outbound SMTP)
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
-RESEND_FROM = os.environ.get("RESEND_FROM", "SmartCart <onboarding@resend.dev>")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+RESEND_FROM = os.getenv("RESEND_FROM", "SmartCart <onboarding@resend.dev>")
 
 ADMIN_UPLOAD_FOLDER = os.environ.get("ADMIN_UPLOAD_FOLDER", 'static/uploads/admin_profiles')
 
